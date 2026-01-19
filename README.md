@@ -1,4 +1,4 @@
-# TRPGdice-Complete
+# 星星骰娘-重骰版！
 
 为 Astrbot 设计的 TRPG 骰子插件（参考 [Dice!](https://forum.kokona.tech/) 与 [海豹](https://dice.weizaima.com/) 的实现），提供掷骰、技能判定、人物卡管理与日志导出等常用功能，便于在群聊中进行跑团玩法支持。
 
