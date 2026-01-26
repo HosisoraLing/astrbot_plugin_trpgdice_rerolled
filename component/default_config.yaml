@@ -15,7 +15,7 @@ output:
 
   # ---------- 运势 ----------
   rp:
-    today: "今日运势: {rp}/100"
+    today: "{name}今日的运势是: {rp}/100 哦~"
 
   # ---------- 火球术 ----------
   fireball:
@@ -24,16 +24,16 @@ output:
 
   # ---------- COC判定 ----------
   coc_roll:
-    set_rule: "已设置大成功/大失败规则: {rule}"
+    set_rule: "收到！接下来大成功/大失败将会按照{rule}规则进行哦~"
     results:
-      great_success: "大成功"
-      extreme_success: "极难成功"
-      hard_success: "困难成功"
+      great_success: "大成功！！！"
+      extreme_success: "极难成功！！"
+      hard_success: "困难成功！"
       success: "成功"
-      great_failure: "大失败"
+      great_failure: "大失败！！！"
       failure: "失败"
       error: "错误: {error}"
-      reset: "判定规则已重置为 {rule}"
+      reset: "判定规则已重置为 {rule} ~"
     setcoc_help: |
       setcoc帮助：
       /setcoc 1 → {rule1}（大成功1，大失败100）
@@ -80,26 +80,26 @@ output:
 
   # ---------- 群昵称 ----------
   nick:
-    platform_unsupported: "该平台不支持修改群昵称"
+    platform_unsupported: "我不能在这个平台修改群昵称QAQ"
     no_character: "人物卡 ID {id} 未找到"
-    success: "昵称修改成功"
+    success: "昵称修改成功~"
 
   # ---------- 掷骰 ----------
   dice:
     normal:
-      success: "{name} 的结果: {result}"
-      success_remark: "{name} 的 {remark} 结果: {result}"
+      success: "{name} 的结果是: {result}~"
+      success_remark: "{name} 的 {remark} 结果是: {result}~"
       error: "掷骰错误: {error}"
     vampire:
-      success: "{name} 的结果: {result}"
+      success: "{name} 的结果是: {result}~"
       error: "吸血鬼掷骰错误: {error}"
-      success_result: "，成功！成功数为{success_num}"
-      great_failure: "，大失败！"
+      success_result: "，成功！成功数为{success_num}~"
+      great_failure: "，大失败！！！"
       failure: "，失败！"
     hidden:
       success: "隐藏掷骰结果: {result}"
       error: "隐藏掷骰错误: {error}"
-      group: "已进行隐藏掷骰"
+      group: "已进行隐藏掷骰~"
     detail: "掷骰详情: {detail}"
     expression_error: "表达式错误: {error}"
     format_error: "⚠️ 格式错误 `{expr}`"
