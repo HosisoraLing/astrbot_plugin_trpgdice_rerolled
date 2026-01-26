@@ -199,11 +199,8 @@ output:
     session_line: "▸ {session_name} · {start_time} · {status} · {message_count} 条记录"
     no_sessions: "尚无任何日志记录。"
     session_deleted: "日志『{session_name}』已删除。"
-    session_exported: "日志『{session_name}』已导出，文件名：{file_name}\n导出结果地址：{result_website}"
+    session_exported: "日志『{session_name}』已导出，文件名：{file_name}"
     delete_error: "删除日志失败。正确用法：.log del <日志名>"
-
-  setting :
-    website : ...
 
 # ---------- 骰子配置 ----------
 dice:

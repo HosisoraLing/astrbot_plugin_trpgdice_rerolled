@@ -831,7 +831,7 @@ class DicePlugin(Star):
     @log.command("end")
     async def cmd_log_end(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
-        ok, info = await logger_core.end_session(group)
+        ok, info = await logger_core.end_session(group, event)
         return event.plain_result(info)
 
 
@@ -874,7 +874,11 @@ class DicePlugin(Star):
         group = event.message_obj.group_id
         parts = event.message_str.strip().split()
         name = parts[2] if len(parts) >= 3 else None
-        ok, info = await logger_core.export_session(group, name)
+        grp = await logger_core.load_group(group)
+        if name not in grp:
+            return event.plain_result(get_output("log.session_not_found", session_name=name))
+        sec = grp[name]
+        ok, info = await logger_core.export_session(group, sec, name, event)
         return event.plain_result(info)
 
 

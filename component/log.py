@@ -173,7 +173,7 @@ class JSONLoggerCore:
         await self.persist_group(group_id)
         return True, get_output("log.session_paused", session_name=active[-1])
 
-    async def end_session(self, group_id: str) -> Tuple[bool,str]:
+    async def end_session(self, group_id: str, event=None) -> Tuple[bool,str]:
         grp = await self.load_group(group_id)
         active = [n for n, s in grp.items() if s.get("end_time") is None and not s.get("finished", False)]
         if not active:
@@ -183,7 +183,7 @@ class JSONLoggerCore:
         sec["end_time"] = int(time.time())
         sec["finished"] = True
         await self.persist_group(group_id)
-        return True, await self.export_session(group_id, sec, name)
+        return True, await self.export_session(group_id, sec, name, event)
 
     async def halt_session(self, group_id: str) -> Tuple[bool,str]:
         grp = await self.load_group(group_id)
@@ -220,7 +220,7 @@ class JSONLoggerCore:
         await self.persist_group(group_id)
         return True, get_output("log.session_deleted", session_name=name)
 
-    async def export_session(self, group_id: str, sec: dict, name: str) -> str:
+    async def export_session(self, group_id: str, sec: dict, name: str, event=None) -> str:
         export_data = {"version": 1, "items": []}
         for m in sec.get("messages", []):
             ts_int = int(m.get("timestamp", int(time.time())))
@@ -240,7 +240,12 @@ class JSONLoggerCore:
         file_path = os.path.join(exports_dir, file_name)
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, ensure_ascii=False, indent=2)
-            
-        website = get_output("setting.website")
-        result_website = f"{website}/?file={file_name}" 
-        return get_output("log.session_exported", file_name=file_name, result_website = result_website)
+
+        # Send file directly to group chat if event is provided
+        if event:
+            from astrbot.api.message_components import File
+            file_comp = File(file=file_path, name=file_name)
+            await event.chain_result([file_comp])
+            return get_output("log.session_exported", session_name=name, file_name=file_name)
+        else:
+            return get_output("log.session_exported", session_name=name, file_name=file_name)
