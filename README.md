@@ -91,13 +91,6 @@
 
 ---
 
-## 仓库
-
-项目地址：
-[https://github.com/WhiteEurya/Astrbot\_plugin\_TRPGdice-Complete](https://github.com/WhiteEurya/Astrbot_plugin_TRPGdice-Complete)
-
----
-
 ## 染色器搭建
 
 本插件提供了类似 [海豹LOG染色器](https://log.weizaima.com/) 的染色功能，保存在 `/log-painter`下，感谢海豹LOG染色器提供的模板与思路。
