@@ -40,7 +40,7 @@ def roll_loss(loss_expr: str):
     根据损失表达式计算损失值。
     支持 "XdY" 或纯数字。
     """
-    match = re.fullmatch(r"(\d+)d(\d+)", loss_expr)
+    match = re.fullmatch(r"(\d+)[dD](\d+)", loss_expr)
     if match:
         num_dice, dice_size = map(int, match.groups())
         return sum(random.randint(1, dice_size) for _ in range(num_dice))
