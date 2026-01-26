@@ -1,12 +1,26 @@
 import os
 import sqlite3
+from typing import List
 
-from .output import get_output
+from .output import get_output, get_config
 
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
-GREAT_SF_RULE_DEFAULT = 2
-GREAT_SF_RULE_STR = ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"]
+# 从配置获取COC规则配置，确保类型正确
+def _get_great_sf_rule_default() -> int:
+    value = get_config("coc_rules.default_rule", 2)
+    if isinstance(value, int):
+        return value
+    return 2
+
+def _get_great_sf_rule_str() -> List[str]:
+    value = get_config("coc_rules.rule_strings", ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"])
+    if isinstance(value, list):
+        return value
+    return ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"]
+
+GREAT_SF_RULE_DEFAULT = _get_great_sf_rule_default()
+GREAT_SF_RULE_STR = _get_great_sf_rule_str()
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #  COC great success/failure rule.                                          #

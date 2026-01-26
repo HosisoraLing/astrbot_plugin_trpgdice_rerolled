@@ -34,6 +34,19 @@ output:
       failure: "失败"
       error: "错误: {error}"
       reset: "判定规则已重置为 {rule}"
+    setcoc_help: |
+      setcoc帮助：
+      /setcoc 1 → {rule1}（大成功1，大失败100）
+      /setcoc 2 → {rule2}（大成功1，阶段性大失败）
+      /setcoc 3 → {rule3}（阶段性大成功，阶段性大失败）
+      /setcoc 4 → {rule4}（大成功1~5，大失败96~100）
+      /setcoc 0 → 默认规则（当前为{default_rule}）
+      当前规则：{current_rule}
+    setcoc_rule1: "大成功1，大失败100"
+    setcoc_rule2: "大成功1，阶段性大失败"
+    setcoc_rule3: "阶段性大成功，阶段性大失败"
+    setcoc_rule4: "大成功1~5，大失败96~100"
+    setcoc_rule0: "默认规则"
 
   # ---------- 人格卡操作 ----------
   pc:
@@ -80,12 +93,25 @@ output:
     vampire:
       success: "{name} 的结果: {result}"
       error: "吸血鬼掷骰错误: {error}"
+      success_result: "，成功！成功数为{success_num}"
+      great_failure: "，大失败！"
+      failure: "，失败！"
     hidden:
       success: "隐藏掷骰结果: {result}"
       error: "隐藏掷骰错误: {error}"
       group: "已进行隐藏掷骰"
     detail: "掷骰详情: {detail}"
     expression_error: "表达式错误: {error}"
+    format_error: "⚠️ 格式错误 `{expr}`"
+    limit_error: "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
+    modifier_error: "⚠️ 修正值 `{modifier}` 无效！"
+    roll_types:
+      bonus: "奖励骰"
+      penalty: "惩罚骰"
+    vampire_roll: "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
+    keep_highest: "{dice_count}d{dice_faces}k{keep_highest}={subtotal} [{kept} | {dropped}]"
+    normal_dice: "{dice_count}d{dice_faces}={subtotal} [{rolls}]"
+    dice_with_modifier: "{dice_count}d{dice_faces}{modifier}={subtotal} [{rolls}] {modifier} = {total}"
 
   # ---------- SAN 理智 ----------
   san:
@@ -94,8 +120,33 @@ output:
       no_loss: "{name} 理智检定: {roll_result}/{san_value} {result_msg} → 无损失"
       great_loss: "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san} (重大损失)"
       zero: "{name} 理智归零"
+    check:
+      success: "成功！"
+      failure: "失败..."
     temporary_insanity: "临时疯狂: {result}"
     long_term_insanity: "长期疯狂: {result}"
+    temporary_insanity_types:
+      - "失忆：调查员只记得最后身处的安全地点，却没有任何来到这里的记忆。这将会持续 1D10 轮。"
+      - "假性残疾：调查员陷入心理性的失明、失聪或躯体缺失感，持续 1D10 轮。"
+      - "暴力倾向：调查员对周围所有人（敌人和同伴）展开攻击，持续 1D10 轮。"
+      - "偏执：调查员陷入严重的偏执妄想（所有人都想伤害他），持续 1D10 轮。"
+      - "人际依赖：调查员误认为某人是他的重要之人，并据此行动，持续 1D10 轮。"
+      - "昏厥：调查员当场昏倒，1D10 轮后苏醒。"
+      - "逃避行为：调查员试图用任何方式逃离当前场所，持续 1D10 轮。"
+      - "歇斯底里：调查员陷入极端情绪（大笑、哭泣、尖叫等），持续 1D10 轮。"
+      - "恐惧：骰 1D100 或由守秘人选择一个恐惧症，调查员会想象它存在，持续 1D10 轮。"
+      - "躁狂：骰 1D100 或由守秘人选择一个躁狂症，调查员会沉溺其中，持续 1D10 轮。"
+    long_term_insanity_types:
+      - "失忆：调查员发现自己身处陌生地方，并忘记自己是谁。记忆会缓慢恢复。"
+      - "被窃：调查员 1D10 小时后清醒，发现自己身上贵重物品丢失。"
+      - "遍体鳞伤：调查员 1D10 小时后清醒，身体有严重伤痕（生命值剩一半）。"
+      - "暴力倾向：调查员可能在疯狂期间杀人或造成重大破坏。"
+      - "极端信念：调查员疯狂地执行某个信仰（如宗教狂热、政治极端），并采取极端行动。"
+      - "重要之人：调查员疯狂追求某个他在意的人，不顾一切地接近该人。"
+      - "被收容：调查员在精神病院或警察局醒来，完全不记得发生了什么。"
+      - "逃避行为：调查员在远离原地点的地方醒来，可能在荒郊野外或陌生城市。"
+      - "恐惧：调查员患上一种新的恐惧症（骰 1D100 或由守秘人选择）。"
+      - "躁狂：调查员患上一种新的躁狂症（骰 1D100 或由守秘人选择）。"
 
   # ---------- 先攻 ----------
   initiative:
@@ -105,11 +156,28 @@ output:
     empty: "先攻列表为空"
     list: "先攻列表:\n{content}"
     next_turn: "轮到 {name} (先攻 {value})"
+    current_marker: "←当前"
+    empty_no_advance: "先攻列表为空，无法推进回合"
+    turn_end: "{current_name}的回合结束 → \\n {next_name}的回合 (先攻: {next_init})"
+    delete_player: "已删除角色{player_name}的先攻"
+    add_update_player: "已添加/更新{player_name}的先攻：{init_value}"
+    current_list: "当前先攻列表为：\\n{content}"
 
   # ---------- 角色生成模板 ----------
   character_list:
     coc: "{characters}"
     dnd: "{characters}"
+  character_sheet:
+    coc: |
+      第 {index} 号调查员
+      力量: {STR}  体质: {CON}  体型: {SIZ}
+      敏捷: {DEX}  外貌: {APP}  智力: {INT}
+      意志: {POW}  教育: {EDU}
+      生命: {HP}  魔力: {MP}  理智: {SAN}  幸运: {LUCK}
+      DB: {DB}  总和 : {TOTAL} / {TOTAL + LUCK}
+    dnd: |
+      第 {index} 位冒险者
+      [{data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]}] → 共计 {sum_data}
 
   # ---------- 名字生成 ----------
   generated_names: "生成 {num} 个名字: {names}"
@@ -134,5 +202,158 @@ output:
     session_exported: "日志『{session_name}』已导出，文件名：{file_name}\n导出结果地址：{result_website}"
     delete_error: "删除日志失败。正确用法：.log del <日志名>"
 
-  setting : 
+  setting :
     website : ...
+
+# ---------- 骰子配置 ----------
+dice:
+  # 默认骰子面数（用于隐藏掷骰等）
+  default_faces: 100
+  # 骰子限制
+  limits:
+    max_count: 100
+    max_faces: 1000
+  # 吸血鬼骰默认难度
+  vampire_default_difficulty: 6
+  # 奖励/惩罚骰配置
+  bonus_penalty:
+    dice_count: 1
+    base_faces: 100
+  # 火球术配置
+  fireball:
+    base_dice: 8
+    dice_per_ring: 1
+  # 运势配置
+  rp:
+    max_value: 100
+
+# ---------- 先攻配置 ----------
+initiative:
+  # 先攻掷骰范围
+  dice_range:
+    min: 1
+    max: 20
+
+# ---------- 理智配置 ----------
+sanity:
+  # SAN检定范围
+  dice_range:
+    min: 1
+    max: 100
+  # 疯狂症状骰子替换
+  insanity_dice:
+    dice: "1D10"
+    min: 1
+    max: 10
+  # 恐惧/躁狂症范围
+  phobia_mania_range:
+    min: 1
+    max: 100
+
+# ---------- 角色生成配置 ----------
+character:
+  # CoC角色生成
+  coc:
+    # 属性骰子配置
+    dice:
+      # 3d6 * 5
+      three_d6:
+        dice_count: 3
+        dice_faces: 6
+        multiplier: 5
+      # 2d6 + 6 * 5
+      two_d6_plus_6:
+        dice_count: 2
+        dice_faces: 6
+        bonus: 6
+        multiplier: 5
+    # HP计算
+    hp_formula: "(SIZ + CON) // 10"
+    # MP计算
+    mp_formula: "POW // 5"
+    # SAN计算
+    san_formula: "POW"
+    # 幸运骰子
+    luck_dice:
+      dice_count: 3
+      dice_faces: 6
+      multiplier: 5
+  # DND角色生成
+  dnd:
+    # 4d6去最低
+    dice:
+      dice_count: 4
+      dice_faces: 6
+      drop_lowest: 1
+    # 属性数量
+    attributes_count: 6
+
+# ---------- DB/Build配置 ----------
+db_build:
+  # DB/Build计算表
+  table:
+    - threshold: 64
+      db: "-2D6"
+      build: -2
+    - threshold: 84
+      db: "-1D6"
+      build: -1
+    - threshold: 124
+      db: "+0"
+      build: 0
+    - threshold: 164
+      db: "+1D4"
+      build: 1
+    - threshold: 204
+      db: "+1D6"
+      build: 2
+    - threshold: 999
+      db: "+2D6"
+      build: 3
+
+# ---------- 名字生成配置 ----------
+names:
+  # 默认语言
+  default_language: "cn"
+  # 支持的语言映射
+  languages:
+    cn:
+      locale: "zh_CN"
+      aliases: ["中", "zh"]
+    en:
+      locale: "en_GB"
+      aliases: ["英"]
+    us:
+      locale: "en_US"
+      aliases: ["美"]
+    jp:
+      locale: "ja_JP"
+      aliases: ["=日"]
+
+# ---------- COC规则配置 ----------
+coc_rules:
+  # 默认规则
+  default_rule: 2
+  # 规则字符串
+  rule_strings:
+    1: "严格规则"
+    2: "COC7版规则"
+    3: "阶段性规则"
+    4: "宽松规则"
+  # 规则描述
+  rule_descriptions:
+    1: "大成功1，大失败100"
+    2: "大成功1，阶段性大失败"
+    3: "阶段性大成功，阶段性大失败"
+    4: "大成功1~5，大失败96~100"
+  # 默认规则描述
+  default_rule_description: "默认规则"
+
+# ---------- 成长配置 ----------
+growth:
+  # 成长判定阈值
+  success_threshold: 95
+  # 成长骰子范围
+  dice_range:
+    min: 1
+    max: 10

@@ -1,5 +1,7 @@
 import random
 
+from .output import get_output, get_config
+
 class InitiativeItem:
     """
     先攻表中的一项，包含角色名、玩家ID、先攻值等信息。
@@ -70,7 +72,7 @@ def format_list():
     global init_list, current_index
     result = []
     for idx, item in enumerate(init_list):
-        marker = "←当前" if idx == current_index else ""
+        marker = get_output("initiative.current_marker") if idx == current_index else ""
         result.append(f"{item.name}({item.value}) {marker}")
     return "\n".join(result)
 
@@ -79,9 +81,11 @@ def initiative(characters):
     根据角色列表生成先攻表（随机掷骰）。
     characters: [(name, player_id, base_value), ...]
     """
+    dice_min = get_config("initiative.dice_range.min", 1)
+    dice_max = get_config("initiative.dice_range.max", 20)
     init_clear()
     for name, player_id, base_value in characters:
-        value = base_value + random.randint(1, 20)
+        value = base_value + random.randint(dice_min, dice_max)
         add_item(name, player_id, value)
     sort_list()
 
@@ -89,7 +93,9 @@ def roll_initiative(name, player_id, base_value):
     """
     单独为一个角色掷先攻并加入先攻表。
     """
-    value = base_value + random.randint(1, 20)
+    dice_min = get_config("initiative.dice_range.min", 1)
+    dice_max = get_config("initiative.dice_range.max", 20)
+    value = base_value + random.randint(dice_min, dice_max)
     add_item(name, player_id, value)
     sort_list()
 

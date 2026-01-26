@@ -1,6 +1,6 @@
-name: astrbot_plugin_TRPGdice_Complete
-desc: 为跑团玩家设计的仿Dice!骰子插件[升级版！]
+name: astrbot_plugin_TRPGdice_Rerolled!
+desc: 为跑团玩家设计的仿Dice!骰子插件，提供更多的自定义能力。
 help: 输入 /dicehelp 查看关键词回复帮助
-version: v2.1.0
-author: shiroling
-repo: https://github.com/WhiteEurya/Astrbot_plugin_TRPGdice-Complete
+version: v1.0.0
+author: 星空凌
+repo: https://github.com/HosisoraLing/Astrbot_plugin_TRPGdice-Rerolled
