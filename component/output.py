@@ -27,3 +27,17 @@ def get_output(key: str, **kwargs):
         return template.format(**kwargs)
     except Exception:
         return template
+
+def get_config(key: str, default=None):
+    """
+    从配置文件中获取配置值，支持多层 key，通过点分隔。
+    如果 key 不存在则返回 default。
+    """
+    keys = key.split(".")
+    config = _config
+    for k in keys:
+        if isinstance(config, dict) and k in config:
+            config = config[k]
+        else:
+            return default
+    return config

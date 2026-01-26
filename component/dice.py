@@ -3,10 +3,8 @@ import re
 import datetime
 import hashlib
 
-from .output import get_output
+from .output import get_output, get_config
 from .rules import great_success_range, great_failure_range, get_great_sf_rule, set_great_sf_rule, GREAT_SF_RULE_DEFAULT, GREAT_SF_RULE_STR
-
-DEFAULT_DICE = 100
 
 def roll_dice(dice_count, dice_faces):
     """掷 `dice_count` 个 `dice_faces` 面骰"""
@@ -38,6 +36,11 @@ def parse_dice_expression(expression):
     """
     expression = expression.replace("x", "*").replace("X", "*")
 
+    # 从配置获取骰子限制
+    max_count = get_config("dice.limits.max_count", 100)
+    max_faces = get_config("dice.limits.max_faces", 1000)
+    vampire_default_difficulty = get_config("dice.vampire_default_difficulty", 6)
+
     match_repeat = re.match(r"(\d+)?#(.+)", expression) # Match 3#2d20
     roll_times = 1
     bonus_dice = 0
@@ -50,7 +53,10 @@ def parse_dice_expression(expression):
         if expression in ["p", "b"]:
             penalty_dice = 1 if expression == "p" else 0
             bonus_dice = 1 if expression == "b" else 0
-            expression = "1d100"
+            # 从配置获取奖励/惩罚骰配置
+            bonus_penalty_dice_count = get_config("dice.bonus_penalty.dice_count", 1)
+            bonus_penalty_base_faces = get_config("dice.bonus_penalty.base_faces", 100)
+            expression = f"{bonus_penalty_dice_count}d{bonus_penalty_base_faces}"
 
     results = []
     total = None
@@ -69,16 +75,16 @@ def parse_dice_expression(expression):
             else:
                 match = re.match(r"(\d*)d(\d+)(k\d+)?([+\-*]\d+)?(v(\d+)?)?", expr)
                 if not match:
-                    return None, f"⚠️ 格式错误 `{expr}`"
+                    return None, get_output("dice.format_error", expr=expr)
 
                 dice_count = int(match.group(1)) if match.group(1) else 1
                 dice_faces = int(match.group(2))
                 keep_highest = int(match.group(3)[1:]) if match.group(3) else dice_count
                 modifier = match.group(4)
-                vampire_difficulty = (int(match.group(6)) if match.group(5) and match.group(5).strip() != "v" else 6) if match.group(5) else None
+                vampire_difficulty = (int(match.group(6)) if match.group(5) and match.group(5).strip() != "v" else vampire_default_difficulty) if match.group(5) else None
 
-                if not (1 <= dice_count <= 100 and 1 <= dice_faces <= 1000):
-                    return None, "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
+                if not (1 <= dice_count <= max_count and 1 <= dice_faces <= max_faces):
+                    return None, get_output("dice.limit_error")
 
                 # COC 奖励/惩罚骰
                 if dice_count == 1 and dice_faces == 100 and (bonus_dice > 0 or penalty_dice > 0):
@@ -87,10 +93,10 @@ def parse_dice_expression(expression):
                     rolls = [random.randint(0, 9) for _ in range(1 + max(bonus_dice, penalty_dice))]
                     if bonus_dice > 0:
                         final_tens = min(rolls[:1 + bonus_dice])
-                        roll_type = "奖励骰"
+                        roll_type = get_output("dice.roll_types.bonus")
                     else:
                         final_tens = max(rolls[:1 + penalty_dice])
-                        roll_type = "惩罚骰"
+                        roll_type = get_output("dice.roll_types.penalty")
                     subtotal = final_tens * 10 + unit
                     roll_result = f"{expr} = [D100: {base_tens * 10 + unit}, {roll_type}: {', '.join(map(str, rolls))}] → {subtotal}"
 
@@ -112,13 +118,13 @@ def parse_dice_expression(expression):
                     if failure_flag and not success_flag:
                         super_failure = True
 
-                    roll_result = f"难度为{vampire_difficulty}的{dice_count}次掷骰 = [{', '.join(map(str, sorted_rolls))}]"
+                    roll_result = get_output("dice.vampire_roll", vampire_difficulty=vampire_difficulty, dice_count=dice_count, rolls=', '.join(map(str, sorted_rolls)))
                     if success_num > 0:
-                        roll_result += f"，成功！成功数为{success_num}"
+                        roll_result += get_output("dice.vampire.success_result", success_num=success_num)
                     elif super_failure:
-                        roll_result += "，大失败！"
+                        roll_result += get_output("dice.vampire.great_failure")
                     else:
-                        roll_result += "，失败！"
+                        roll_result += get_output("dice.vampire.failure")
                     subtotal = None  # 吸血鬼骰不返回总和
 
                 else:
@@ -131,16 +137,16 @@ def parse_dice_expression(expression):
                     if keep_highest < dice_count:
                         kept = " ".join(map(str, sorted_rolls[:keep_highest]))
                         dropped = " ".join(map(str, sorted_rolls[keep_highest:]))
-                        roll_result = f"{dice_count}d{dice_faces}k{keep_highest}={subtotal_before_mod} [{kept} | {dropped}]"
+                        roll_result = get_output("dice.keep_highest", dice_count=dice_count, dice_faces=dice_faces, keep_highest=keep_highest, subtotal=subtotal_before_mod, kept=kept, dropped=dropped)
                     else:
-                        roll_result = f"{dice_count}d{dice_faces}={subtotal_before_mod} [{' + '.join(map(str, rolls))}]"
+                        roll_result = get_output("dice.normal_dice", dice_count=dice_count, dice_faces=dice_faces, subtotal=subtotal_before_mod, rolls=' + '.join(map(str, rolls)))
 
                     if modifier:
                         try:
                             subtotal = eval(f"{subtotal_before_mod}{modifier}")
-                            roll_result = f"{dice_count}d{dice_faces}{modifier}={subtotal_before_mod} [{' + '.join(map(str, rolls))}] {modifier} = {subtotal}"
+                            roll_result = get_output("dice.dice_with_modifier", dice_count=dice_count, dice_faces=dice_faces, modifier=modifier, subtotal=subtotal_before_mod, rolls=' + '.join(map(str, rolls)), total=subtotal)
                         except:
-                            return None, f"⚠️ 修正值 `{modifier}` 无效！"
+                            return None, get_output("dice.modifier_error", modifier=modifier)
                     else:
                         subtotal = subtotal_before_mod
 
@@ -289,7 +295,8 @@ def roll_hidden(message: str = None):
     """
     私聊掷骰，返回格式化字符串。
     """
-    message = message.strip() if message else f"1d{DEFAULT_DICE}"
+    default_dice = get_config("dice.default_faces", 100)
+    message = message.strip() if message else f"1d{default_dice}"
     total, result_message = parse_dice_expression(message)
     if total is None:
         return get_output("dice.hidden.error", error=result_message)
@@ -330,7 +337,9 @@ def fireball(ring: int = 3):
     """
     if ring < 3:
         return get_output("fireball.low")
-    rolls = [random.randint(1, 6) for _ in range(8 + (ring - 3))]
+    base_dice = get_config("dice.fireball.base_dice", 8)
+    dice_per_ring = get_config("dice.fireball.dice_per_ring", 1)
+    rolls = [random.randint(1, 6) for _ in range(base_dice + (ring - 3) * dice_per_ring)]
     total_sum = sum(rolls)
     damage_breakdown = " + ".join(map(str, rolls))
     return get_output(
@@ -344,9 +353,10 @@ def roll_RP(user_id: str):
     """
     今日RP（运势），返回字符串。
     """
+    max_rp = get_config("dice.rp.max_value", 100)
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     RP_str = f"{user_id}_{today}"
     hash = hashlib.sha256(RP_str.encode()).hexdigest()
-    rp = int(hash, 16) % 100 + 1
+    rp = int(hash, 16) % max_rp + 1
     return get_output("rp.today", rp=rp)
 

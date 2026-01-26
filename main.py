@@ -23,7 +23,7 @@ from faker import Faker
 from .component import character as charmod
 from .component import dice as dice_mod
 from .component import sanity
-from .component.output import get_output
+from .component.output import get_output, get_config
 from .component.utils import generate_names, roll_character, format_character, roll_dnd_character, format_dnd_character
 from .component.rules import modify_coc_great_sf_rule_command
 from .component.log import JSONLoggerCore
@@ -36,8 +36,6 @@ DATA_FOLDER = PLUGIN_DIR + "/chara_data/"  # 存储人物卡的文件夹
 #先攻表
 init_list = {}
 current_index = {}
-
-DEFAULT_DICE = 100
 
 log_help_str = '''.log 指令一览：
     .log on -- 开启log记录。亚托莉会记录之后所有的对话，并保存在“群名+时间”文件夹内。（施工中）
@@ -80,18 +78,21 @@ class DicePlugin(Star):
     # @filter.command("r")
     async def handle_roll_dice(self, event: AstrMessageEvent, message: str = None, remark : str = None):
         """普通掷骰：改为直接调用 dice.handle_roll_dice，输出由 get_output 管理（无 fallback）"""
-        
+
         message = message.strip() if message else None
 
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
         client = event.bot
-        
+
         ret = await get_sender_nickname(client, group_id, user_id)
         ret = event.get_sender_name() if ret == "" else ret
 
+        # 从配置获取默认骰子面数
+        default_dice = get_config("dice.default_faces", 100)
+
         # 让 dice 模块处理表达式并返回由 get_output 格式化好的文本（或错误文本）
-        result_text = dice_mod.handle_roll_dice(message if message else f"1d{dice_mod.DEFAULT_DICE}", name = ret, remark = remark)
+        result_text = dice_mod.handle_roll_dice(message if message else f"1d{default_dice}", name = ret, remark = remark)
         message_id = event.message_obj.message_id
         payloads = {
             "group_id": group_id,
@@ -145,7 +146,9 @@ class DicePlugin(Star):
     async def roll_hidden(self, event: AstrMessageEvent, message: str = None):
         """私聊发送掷骰结果 —— 所有文本由 get_output 管理（无 fallback）"""
         sender_id = event.get_sender_id()
-        message = message.strip() if message else f"1d{dice_mod.DEFAULT_DICE}"
+        # 从配置获取默认骰子面数
+        default_dice = get_config("dice.default_faces", 100)
+        message = message.strip() if message else f"1d{default_dice}"
 
         notice_text = get_output("dice.hidden.group")
         yield event.plain_result(notice_text)
@@ -745,16 +748,20 @@ class DicePlugin(Star):
         user_id = event.get_sender_id()
         user_name = event.get_sender_name()
 
+        # 从配置获取先攻掷骰范围
+        dice_min = get_config("initiative.dice_range.min", 1)
+        dice_max = get_config("initiative.dice_range.max", 20)
+
         if not expr:
-            init_value = random.randint(1, 20)
+            init_value = random.randint(dice_min, dice_max)
             player_name = user_name
         elif expr[0] == "+":
             match = re.match(r"\+(\d+)", expr)
-            init_value = random.randint(1, 20) + int(match.group(1))
+            init_value = random.randint(dice_min, dice_max) + int(match.group(1))
             player_name = user_name
         elif expr[0] == "-":
             match = re.match(r"\-(\d+)", expr)
-            init_value = random.randint(1, 20) - int(match.group(1))
+            init_value = random.randint(dice_min, dice_max) - int(match.group(1))
             player_name = user_name
         else:
             match = re.match(r"(\d+)", expr)
@@ -1041,13 +1048,16 @@ class DicePlugin(Star):
         elif cmd[0:2] == "rd":
             raw = message[2:].strip()
             dice_match = re.match(r'(\d+)', raw)
-            
+
+            # 从配置获取默认骰子面数
+            default_dice = get_config("dice.default_faces", 100)
+
             if dice_match:
                 dice_size = dice_match.group(1)
                 expr = f"1d{dice_size}"
                 remark = raw[(len(dice_size)):].strip()
             else:
-                expr = "1d100"
+                expr = f"1d{default_dice}"
                 remark = raw.strip()
                 
         elif cmd[0] == "r":
@@ -1059,6 +1069,10 @@ class DicePlugin(Star):
                     expr = expr
             else:
                 expr = message[1:].strip()
+                # 如果没有指定骰子，使用默认骰子
+                if not expr or not re.match(r'(\d*)d(\d+)', expr):
+                    default_dice = get_config("dice.default_faces", 100)
+                    expr = f"1d{default_dice}"
                 
         # result_message = (f"m={m},message={message},cmd={cmd},expr={expr}.")
         # yield event.plain_result(result_message)
