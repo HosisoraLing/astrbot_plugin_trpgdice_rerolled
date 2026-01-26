@@ -1061,7 +1061,8 @@ class DicePlugin(Star):
                 remark = raw.strip()
                 
         elif cmd[0] == "r":
-            r_match = re.match(r'([0-9]*[dD][0-9]+)', message[1:])
+            # 匹配完整的骰子表达式，包括运算符和数字（如 3d6+10, 2d4-1d8 等）
+            r_match = re.match(r'([0-9]*[dD][0-9]+(?:[+\-*][0-9]+(?:d[0-9]+)?)*)', message[1:])
             if r_match:
                 expr = r_match.group(1)
                 remark = message[1+len(expr):].strip()

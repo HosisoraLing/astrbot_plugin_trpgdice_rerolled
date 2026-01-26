@@ -73,7 +73,7 @@ def parse_dice_expression(expression):
                 subtotal = int(expr)
                 roll_result = f"{subtotal}"
             else:
-                match = re.match(r"(\d*)d(\d+)(k\d+)?([+\-*]\d+)?(v(\d+)?)?", expr)
+                match = re.match(r"(\d*)[dD](\d+)([kK]\d+)?([+\-*]\d+)?([vV](\d+)?)?", expr)
                 if not match:
                     return None, get_output("dice.format_error", expr=expr)
 
