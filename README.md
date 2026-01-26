@@ -182,20 +182,6 @@ npm run build
 * 确保后端服务已经启动，否则前端无法正常请求 API。
 * 如果遇到权限问题，请尝试使用管理员/sudo 权限。大部分npm操作可能都需要您提供管理员权限
 
-## 别的想说的
-
-在完成之前一版TRPG_Dice之后，本来已经准备摆了，但是朋友们以及其他的用户不断给我反馈以及提供idea、编码上的帮助，这给了我动力将曾经的插件进行大幅度优化，目前比起曾经那个简单的骰子和屎山代码已经有了很大优化。当然这个插件一定还有很多bug和优化的地方，因此如果大家对这个插件有任何问题、发现了任何BUG，都可以在issue中与我交流。
-
-## Contributors
-
-感谢以下为本项目做出贡献的朋友：
-
-<a href="https://github.com/RealVitaminC">
-  <img src="https://github.com/RealVitaminC.png" width="50" height="50"/>
-</a>
-<a href="https://github.com/YumoFS">
-  <img src="https://github.com/YumoFS.png" width="50" height="50"/>
-</a>
 
 ## 许可
 
