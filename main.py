@@ -365,7 +365,7 @@ class DicePlugin(Star):
             chara_data["attributes"][attribute] = 0
 
         current_value = chara_data["attributes"][attribute]
-        match = re.match(r"([+\-*]?)(\d*)d?(\d*)", value)
+        match = re.match(r"([+\-*]?)(\d*)[dD]?(\d*)", value)
         if not match:
             yield event.plain_result(get_output("pc.update.error_format"))
             return
@@ -1071,7 +1071,7 @@ class DicePlugin(Star):
             else:
                 expr = message[1:].strip()
                 # 如果没有指定骰子，使用默认骰子
-                if not expr or not re.match(r'(\d*)d(\d+)', expr):
+                if not expr or not re.match(r'(\d*)[dD](\d+)', expr):
                     default_dice = get_config("dice.default_faces", 100)
                     expr = f"1d{default_dice}"
                 
