@@ -4,7 +4,7 @@
 
 为所有使用astrbot平台但想要有与其他骰娘相同体验的骰主设计。
 
-本插件是 [Astrbot_plugin_TRPGdice](https://github.com/WhiteEurya/Astrbot_plugin_TRPGdice) 的升级版。
+基于[TRPGdice-Complete](https://github.com/WhiteEurya/Astrbot_plugin_TRPGdice-Complete)二次开发，提供配置文件以管理骰娘输出风格。
 
 ---
 
