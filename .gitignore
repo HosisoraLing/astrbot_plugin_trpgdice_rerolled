@@ -1,0 +1,39 @@
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+
+# Python cache directories
+__pycache__/
+
+# IDE and editor directories
+.vscode/
+.idea/
+
+# Claude Code configuration
+.claude/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python virtual environments
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
