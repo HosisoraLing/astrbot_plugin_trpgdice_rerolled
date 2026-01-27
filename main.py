@@ -834,7 +834,8 @@ class DicePlugin(Star):
         ok, result = await logger_core.end_session(group)
         
         if not ok:
-            return event.plain_result(result)
+            yield event.plain_result(result)
+            return
         
         name, sec = result
         
@@ -844,7 +845,8 @@ class DicePlugin(Star):
             ok, file_path = await logger_core.export_session(group, sec, name)
             
             if not ok:
-                return event.plain_result(get_output("log.export_failed", error=file_path))
+                yield event.plain_result(get_output("log.export_failed", error=file_path))
+                return
             
             file_name = f"{group}_{name}.json"
             # Send file to chat
@@ -853,7 +855,7 @@ class DicePlugin(Star):
             # Send success message
             yield event.plain_result(get_output("log.session_exported", session_name=name, file_name=file_name))
         except Exception as e:
-            return event.plain_result(get_output("log.send_file_failed", error=str(e)))
+            yield event.plain_result(get_output("log.send_file_failed", error=str(e)))
 
 
     @log.command("off")
