@@ -1,4 +1,5 @@
-name: 星星骰娘-重骰版！
+name: astrbot_plugin_trpgdice_rerolled
+display_name: 星星骰娘-重骰版！
 desc: 为跑团玩家设计的仿Dice!骰子插件，提供更多的自定义能力。
 help: 输入 /dicehelp 查看关键词回复帮助
 version: v1.0.3
