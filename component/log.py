@@ -238,14 +238,10 @@ class JSONLoggerCore:
         os.makedirs(exports_dir, exist_ok=True)
         file_name = f"{group_id}_{name}.json"
         file_path = os.path.join(exports_dir, file_name)
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(export_data, f, ensure_ascii=False, indent=2)
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(export_data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return get_output("log.export_failed", error=str(e))
 
-        # Send file directly to group chat if event is provided
-        if event:
-            from astrbot.api.message_components import File
-            file_comp = File(file=file_path, name=file_name)
-            await event.chain_result([file_comp])
-            return get_output("log.session_exported", session_name=name, file_name=file_name)
-        else:
-            return get_output("log.session_exported", session_name=name, file_name=file_name)
+        return get_output("log.session_exported", session_name=name, file_name=file_name)

@@ -831,8 +831,49 @@ class DicePlugin(Star):
     @log.command("end")
     async def cmd_log_end(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
-        ok, info = await logger_core.end_session(group, event)
-        return event.plain_result(info)
+        grp = await logger_core.load_group(group)
+        active = [n for n, s in grp.items() if s.get("end_time") is None and not s.get("finished", False)]
+        
+        if not active:
+            return event.plain_result(get_output("log.no_active_session"))
+        
+        name = active[-1]
+        sec = grp[name]
+        sec["end_time"] = int(time.time())
+        sec["finished"] = True
+        await logger_core.persist_group(group)
+        
+        # Export and send file
+        try:
+            from astrbot.api.message_components import File
+            exports_dir = os.path.join(logger_core.base_dir, "exports")
+            os.makedirs(exports_dir, exist_ok=True)
+            file_name = f"{group}_{name}.json"
+            file_path = os.path.join(exports_dir, file_name)
+            
+            # Export to JSON
+            export_data = {"version": 1, "items": []}
+            for m in sec.get("messages", []):
+                ts_int = int(m.get("timestamp", int(time.time())))
+                time_str = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime(ts_int + 8*3600))
+                export_data["items"].append({
+                    "nickname": m.get("nickname"),
+                    "IMUserId": m.get("user_id"),
+                    "time": time_str,
+                    "message": m.get("text", ""),
+                    "images": m.get("images", []),
+                    "isDice": False
+                })
+            
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(export_data, f, ensure_ascii=False, indent=2)
+            
+            # Send file to chat
+            file_comp = File(file=file_path, name=file_name)
+            yield event.chain_result([file_comp])
+            yield event.plain_result(get_output("log.session_exported", session_name=name, file_name=file_name))
+        except Exception as e:
+            yield event.plain_result(get_output("log.send_file_failed", error=str(e)))
 
 
     @log.command("off")
