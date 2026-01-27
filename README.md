@@ -12,7 +12,7 @@
 
 1. 克隆仓库到本地：
    ```bash
-   git clone https://github.com/WhiteEurya/Astrbot_plugin_TRPGdice-Complete.git
+   git clone https://github.com/HosisoraLing/Astrbot_plugin_TRPGdice-Rerolled.git
    ````
 
 2. 将插件文件/目录放入 Astrbot 的插件目录（plugin folder）。
