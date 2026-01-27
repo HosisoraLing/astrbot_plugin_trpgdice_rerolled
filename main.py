@@ -815,9 +815,8 @@ class DicePlugin(Star):
         
     # ======================== LOG相关 ============================= #
     @filter.command_group("log")
-    async def log(event: AstrMessageEvent):
+    async def log(self, event: AstrMessageEvent):
         pass
-
 
     @log.command("new")
     async def cmd_log_new(self, event: AstrMessageEvent):
@@ -825,45 +824,42 @@ class DicePlugin(Star):
         parts = event.message_str.strip().split()
         name = parts[2] if len(parts) >= 3 else None
         ok, info = await logger_core.new_session(group, name)
-        return event.plain_result(info)
-
+        yield event.plain_result(info)
 
     @log.command("end")
     async def cmd_log_end(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
         ok, result = await logger_core.end_session(group)
-        
+
         if not ok:
             yield event.plain_result(result)
             return
-        
+
         name, sec = result
-        
-        # Export and send file
+
         try:
             from astrbot.api.message_components import File
+
             ok, file_path = await logger_core.export_session(group, sec, name)
-            
             if not ok:
                 yield event.plain_result(get_output("log.export_failed", error=file_path))
                 return
-            
-            file_name = f"{group}_{name}.json"
-            # Send file to chat
-            file_comp = File(file=file_path, name=file_name)
-            yield event.chain_result([file_comp])
-            # Send success message
-            yield event.plain_result(get_output("log.session_exported", session_name=name, file_name=file_name))
-        except Exception as e:
-            yield event.plain_result(get_output("log.send_file_failed", error=str(e)))
 
+            file_name = f"{group}_{name}.json"
+            yield event.chain_result([File(file=file_path, name=file_name)])
+            yield event.plain_result(
+                get_output("log.session_exported", session_name=name, file_name=file_name)
+            )
+        except Exception as e:
+            yield event.plain_result(
+                get_output("log.send_file_failed", error=str(e))
+            )
 
     @log.command("off")
     async def cmd_log_off(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
         ok, info = await logger_core.pause_sessions(group)
-        return event.plain_result(info)
-
+        yield event.plain_result(info)
 
     @log.command("on")
     async def cmd_log_on(self, event: AstrMessageEvent):
@@ -871,26 +867,24 @@ class DicePlugin(Star):
         parts = event.message_str.strip().split()
         name = parts[2] if len(parts) >= 3 else None
         ok, info = await logger_core.resume_session(group, name)
-        return event.plain_result(info)
-
+        yield event.plain_result(info)
 
     @log.command("list")
     async def cmd_log_list(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
         lines = await logger_core.list_sessions(group)
-        return event.plain_result("\n".join(lines))
-
+        yield event.plain_result("\n".join(lines))
 
     @log.command("del")
     async def cmd_log_del(self, event: AstrMessageEvent):
         group = event.message_obj.group_id
         parts = event.message_str.strip().split()
         if len(parts) < 3:
-            return event.plain_result(get_output("log.delete_error"))
+            yield event.plain_result(get_output("log.delete_error"))
+            return
         name = parts[2]
         ok, info = await logger_core.delete_session(group, name)
-        return event.plain_result(info)
-
+        yield event.plain_result(info)
 
     @log.command("get")
     async def cmd_log_get(self, event: AstrMessageEvent):
@@ -899,11 +893,13 @@ class DicePlugin(Star):
         name = parts[2] if len(parts) >= 3 else None
         grp = await logger_core.load_group(group)
         if name not in grp:
-            return event.plain_result(get_output("log.session_not_found", session_name=name))
+            yield event.plain_result(
+                get_output("log.session_not_found", session_name=name)
+            )
+            return
         sec = grp[name]
         ok, info = await logger_core.export_session(group, sec, name, event)
-        return event.plain_result(info)
-
+        yield event.plain_result(info)
 
     @log.command("stat")
     async def cmd_log_stat(self, event: AstrMessageEvent):
@@ -912,7 +908,7 @@ class DicePlugin(Star):
         name = parts[2] if len(parts) >= 3 else None
         all_flag = len(parts) >= 4 and parts[3] == "--all"
         lines = await logger_core.stat_sessions(group, name, all_flag)
-        return event.plain_result("\n".join(lines))
+        yield event.plain_result("\n".join(lines))
     # ======================== LOG相关 ============================= #
     
     # 注册指令 /dicehelp
