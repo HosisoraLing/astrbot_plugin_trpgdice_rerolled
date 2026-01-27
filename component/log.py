@@ -173,7 +173,7 @@ class JSONLoggerCore:
         await self.persist_group(group_id)
         return True, get_output("log.session_paused", session_name=active[-1])
 
-    async def end_session(self, group_id: str, event=None) -> Tuple[bool,str]:
+    async def end_session(self, group_id: str) -> Tuple[bool, tuple]:
         grp = await self.load_group(group_id)
         active = [n for n, s in grp.items() if s.get("end_time") is None and not s.get("finished", False)]
         if not active:
@@ -183,7 +183,7 @@ class JSONLoggerCore:
         sec["end_time"] = int(time.time())
         sec["finished"] = True
         await self.persist_group(group_id)
-        return True, await self.export_session(group_id, sec, name, event)
+        return True, (name, sec)
 
     async def halt_session(self, group_id: str) -> Tuple[bool,str]:
         grp = await self.load_group(group_id)
@@ -220,7 +220,7 @@ class JSONLoggerCore:
         await self.persist_group(group_id)
         return True, get_output("log.session_deleted", session_name=name)
 
-    async def export_session(self, group_id: str, sec: dict, name: str, event=None) -> str:
+    async def export_session(self, group_id: str, sec: dict, name: str) -> Tuple[bool, str]:
         export_data = {"version": 1, "items": []}
         for m in sec.get("messages", []):
             ts_int = int(m.get("timestamp", int(time.time())))
@@ -241,7 +241,6 @@ class JSONLoggerCore:
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, ensure_ascii=False, indent=2)
+            return True, file_path
         except Exception as e:
-            return get_output("log.export_failed", error=str(e))
-
-        return get_output("log.session_exported", session_name=name, file_name=file_name)
+            return False, str(e)
