@@ -2,6 +2,6 @@ name: astrbot_plugin_trpgdice_rerolled
 display_name: 星星骰娘-重骰版！
 desc: 支持自定义回复的骰娘插件！基于trpgdice_complete开发
 help: 输入 /dicehelp 查看关键词回复帮助
-version: v1.0.3
+version: v1.1.0
 author: 星空凌
 repo: https://github.com/HosisoraLing/astrbot_plugin_trpgdice_rerolled
