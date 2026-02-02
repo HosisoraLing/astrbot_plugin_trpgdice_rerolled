@@ -69,25 +69,39 @@ def get_output(key: str, **kwargs):
     支持多层 key，通过点分隔，如 "skill_check.normal"
     根据 key 获取输出模板，并用 kwargs 格式化。
     如果 key 不存在则返回空字符串。
-    
+
     配置来源：_conf_schema.json 中定义的 output 部分
-    
+
     示例：
     - get_output("dice.normal.success", name="张三", result="50")
     - get_output("skill_check.normal", name="李四", skill_name="射击", skill_value="50", roll_result="45", result="成功")
     """
     if _config is None:
         raise RuntimeError("配置未初始化，请确保在插件初始化时调用 set_config()")
-    
+
     keys = key.split(".")
     template = _config.get("output", {})
     for k in keys:
         if isinstance(template, dict):
-            template = template.get(k, {})
+            # 如果有 items 字段，先导航到 items
+            if "items" in template:
+                template = template["items"]
+
+            # 现在查找 key
+            if k in template:
+                template = template[k]
+            else:
+                return ""
         else:
             return ""
+
+    # 如果最终结果有 default 字段，使用它
+    if isinstance(template, dict) and "default" in template:
+        template = template["default"]
+
     if not isinstance(template, str):
         return ""
+
     try:
         return template.format(**kwargs)
     except Exception:
@@ -97,29 +111,47 @@ def get_config(key: str, default=None):
     """
     从配置对象中获取配置值，支持多层 key，通过点分隔。
     如果 key 不存在则返回 default。
-    
+
     所有配置项都来自于 _conf_schema.json 的定义。
     AstrBot 在启动时自动根据 Schema 生成配置。
-    
+
     示例：
     - get_config("dice.default_faces", 100)  # 默认骰子面数
     - get_config("character.hp_formula", "(SIZ + CON) // 10")  # HP 计算公式
     - get_config("coc_rules.default_rule", 2)  # COC 默认规则
     - get_config("sanity.san_check_max", 100)  # 理智检定最大值
-    
+
     配置来源：_conf_schema.json
     存储位置：data/config/astrbot_plugin_TRPG_config.json（由 AstrBot 管理）
     """
     if _config is None:
         return default
-    
+
     keys = key.split(".")
     config = _config
     for k in keys:
-        if isinstance(config, dict) and k in config:
-            config = config[k]
+        # 处理 AstrBotConfig 对象或字典
+        if hasattr(config, "get"):
+            # AstrBotConfig 对象，使用 get 方法
+            next_config = config.get(k)
+            if next_config is None:
+                return default
+            config = next_config
+        elif isinstance(config, dict):
+            # 字典对象
+            if k in config:
+                config = config[k]
+            else:
+                return default
         else:
             return default
+
+    # 如果最终结果有 default 字段，使用它
+    if hasattr(config, "get") and config.get("default") is not None:
+        return config.get("default")
+    elif isinstance(config, dict) and "default" in config:
+        return config["default"]
+
     return config
 
 def verify_config_initialization():
