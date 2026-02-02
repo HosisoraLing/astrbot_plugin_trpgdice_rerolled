@@ -80,6 +80,8 @@ def get_output(key: str, **kwargs):
         raise RuntimeError("配置未初始化，请确保在插件初始化时调用 set_config()")
 
     keys = key.split(".")
+
+    # 首先尝试从配置中获取用户自定义值
     template = _config.get("output", {})
     for k in keys:
         if isinstance(template, dict):
@@ -91,9 +93,36 @@ def get_output(key: str, **kwargs):
             if k in template:
                 template = template[k]
             else:
-                return ""
+                template = None
+                break
         else:
-            return ""
+            template = None
+            break
+
+    # 如果配置中没有找到，从 schema 中获取默认值
+    if template is None or (isinstance(template, dict) and "default" not in template):
+        schema = _load_schema()
+        if schema:
+            schema_template = schema.get("output", {})
+            for k in keys:
+                if isinstance(schema_template, dict):
+                    # 如果有 items 字段，先导航到 items
+                    if "items" in schema_template:
+                        schema_template = schema_template["items"]
+
+                    # 现在查找 key
+                    if k in schema_template:
+                        schema_template = schema_template[k]
+                    else:
+                        return ""
+                else:
+                    return ""
+
+            # 如果最终结果有 default 字段，使用它
+            if isinstance(schema_template, dict) and "default" in schema_template:
+                template = schema_template["default"]
+            else:
+                template = schema_template
 
     # 如果最终结果有 default 字段，使用它
     if isinstance(template, dict) and "default" in template:
