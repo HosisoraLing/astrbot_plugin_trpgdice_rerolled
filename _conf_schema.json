@@ -22,6 +22,48 @@
             "description": "奖励骰",
             "type": "text",
             "default": "<{name}> 奖励骰: {new_tens_digits} → 最终结果: {final_y}/{skill_value} → {result}"
+          },
+          "error": {
+            "description": "技能判定错误",
+            "type": "object",
+            "items": {
+              "normal": {
+                "description": "普通技能判定错误",
+                "type": "text",
+                "default": "技能 {skill_name} 未找到"
+              },
+              "penalty": {
+                "description": "惩罚骰参数错误",
+                "type": "text",
+                "default": "惩罚骰参数错误: 技能 {skill_name}"
+              },
+              "bonus": {
+                "description": "奖励骰参数错误",
+                "type": "text",
+                "default": "奖励骰参数错误: 技能 {skill_name}"
+              }
+            }
+          },
+          "grow_up": {
+            "description": "技能成长",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "成长成功",
+                "type": "text",
+                "default": "技能 [{skill_name}] 成长: {skill_value} → {skill_value + en_value} (+{en_value})"
+              },
+              "failure": {
+                "description": "成长失败",
+                "type": "text",
+                "default": "技能 [{skill_name}] 未成长"
+              },
+              "boost_result": {
+                "description": "成长检定结果",
+                "type": "text",
+                "default": "成长检定: {roll_result} / {skill_value} → {result}"
+              }
+            }
           }
         }
       },
@@ -60,6 +102,82 @@
             "description": "设置规则提示",
             "type": "text",
             "default": "收到！接下来大成功/大失败将会按照{rule}规则进行哦~"
+          },
+          "results": {
+            "description": "判定结果",
+            "type": "object",
+            "items": {
+              "great_success": {
+                "description": "大成功",
+                "type": "text",
+                "default": "大成功！！！"
+              },
+              "extreme_success": {
+                "description": "极难成功",
+                "type": "text",
+                "default": "极难成功！！"
+              },
+              "hard_success": {
+                "description": "困难成功",
+                "type": "text",
+                "default": "困难成功！"
+              },
+              "success": {
+                "description": "成功",
+                "type": "text",
+                "default": "成功"
+              },
+              "great_failure": {
+                "description": "大失败",
+                "type": "text",
+                "default": "大失败！！！"
+              },
+              "failure": {
+                "description": "失败",
+                "type": "text",
+                "default": "失败"
+              },
+              "error": {
+                "description": "错误",
+                "type": "text",
+                "default": "错误: {error}"
+              },
+              "reset": {
+                "description": "重置规则",
+                "type": "text",
+                "default": "判定规则已重置为 {rule} ~"
+              }
+            }
+          },
+          "setcoc_help": {
+            "description": "setcoc帮助",
+            "type": "text",
+            "default": "setcoc帮助：\n/setcoc 1 → {rule1}（大成功1，大失败100）\n/setcoc 2 → {rule2}（大成功1，阶段性大失败）\n/setcoc 3 → {rule3}（阶段性大成功，阶段性大失败）\n/setcoc 4 → {rule4}（大成功1~5，大失败96~100）\n/setcoc 0 → 默认规则（当前为{default_rule}）\n当前规则：{current_rule}"
+          },
+          "setcoc_rule1": {
+            "description": "规则1描述",
+            "type": "text",
+            "default": "大成功1，大失败100"
+          },
+          "setcoc_rule2": {
+            "description": "规则2描述",
+            "type": "text",
+            "default": "大成功1，阶段性大失败"
+          },
+          "setcoc_rule3": {
+            "description": "规则3描述",
+            "type": "text",
+            "default": "阶段性大成功，阶段性大失败"
+          },
+          "setcoc_rule4": {
+            "description": "规则4描述",
+            "type": "text",
+            "default": "大成功1~5，大失败96~100"
+          },
+          "setcoc_rule0": {
+            "description": "规则0描述",
+            "type": "text",
+            "default": "默认规则"
           }
         }
       },
@@ -67,15 +185,168 @@
         "description": "人物卡相关输出",
         "type": "object",
         "items": {
-          "create_success": {
-            "description": "创建成功",
-            "type": "text",
-            "default": "人物卡 [{name}] 已创建 (ID: {id})"
+          "create": {
+            "description": "创建人物卡",
+            "type": "object",
+            "items": {
+              "duplicate": {
+                "description": "人物卡已存在",
+                "type": "text",
+                "default": "人物卡 [{name}] 已存在"
+              },
+              "success": {
+                "description": "创建成功",
+                "type": "text",
+                "default": "人物卡 [{name}] 已创建 (ID: {id})"
+              }
+            }
           },
-          "change_success": {
-            "description": "切换成功",
+          "show": {
+            "description": "显示人物卡",
+            "type": "object",
+            "items": {
+              "no_active": {
+                "description": "未选择人物卡",
+                "type": "text",
+                "default": "未选择人物卡 (.pc change)"
+              },
+              "load_fail": {
+                "description": "加载失败",
+                "type": "text",
+                "default": "人物卡 ID {id} 不存在"
+              },
+              "attr_missing": {
+                "description": "属性未找到",
+                "type": "text",
+                "default": "属性 [{attribute}] 未找到"
+              },
+              "attr": {
+                "description": "属性显示",
+                "type": "text",
+                "default": "{attr} = {value}"
+              },
+              "all": {
+                "description": "所有属性",
+                "type": "text",
+                "default": "{name}: {attributes}"
+              }
+            }
+          },
+          "list": {
+            "description": "人物卡列表",
+            "type": "object",
+            "items": {
+              "empty": {
+                "description": "无人物卡",
+                "type": "text",
+                "default": "无人物卡"
+              },
+              "result": {
+                "description": "列表结果",
+                "type": "text",
+                "default": "{list}"
+              }
+            }
+          },
+          "change": {
+            "description": "切换人物卡",
+            "type": "object",
+            "items": {
+              "missing": {
+                "description": "人物卡不存在",
+                "type": "text",
+                "default": "人物卡 [{name}] 不存在"
+              },
+              "success": {
+                "description": "切换成功",
+                "type": "text",
+                "default": "已切换到人物卡 [{name}]"
+              }
+            }
+          },
+          "update": {
+            "description": "更新人物卡",
+            "type": "object",
+            "items": {
+              "no_active": {
+                "description": "未选择人物卡",
+                "type": "text",
+                "default": "未选择人物卡 (.pc change)"
+              },
+              "error_format": {
+                "description": "格式错误",
+                "type": "text",
+                "default": "格式错误，示例: 力量+1"
+              },
+              "success": {
+                "description": "更新成功",
+                "type": "text",
+                "default": "[{attr}] {old} → {new}"
+              },
+              "batch_success": {
+                "description": "批量更新成功",
+                "type": "text",
+                "default": "已更新 {count} 项属性"
+              }
+            }
+          },
+          "delete": {
+            "description": "删除人物卡",
+            "type": "object",
+            "items": {
+              "fail": {
+                "description": "删除失败",
+                "type": "text",
+                "default": "人物卡 [{name}] 不存在"
+              },
+              "success": {
+                "description": "删除成功",
+                "type": "text",
+                "default": "人物卡 [{name}] 已删除"
+              }
+            }
+          },
+          "grow": {
+            "description": "人物卡成长",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "成长成功",
+                "type": "text",
+                "default": "技能 [{skill_name}] 成长: {skill_value} → {new_value} (+{en_value})"
+              },
+              "failure": {
+                "description": "成长失败",
+                "type": "text",
+                "default": "技能 [{skill_name}] 未成长"
+              },
+              "boost_result": {
+                "description": "成长检定结果",
+                "type": "text",
+                "default": "成长检定: {roll_result} / {skill_value} → {result}"
+              }
+            }
+          }
+        }
+      },
+      "nick": {
+        "description": "群昵称相关输出",
+        "type": "object",
+        "items": {
+          "platform_unsupported": {
+            "description": "平台不支持",
             "type": "text",
-            "default": "已切换到人物卡 [{name}]"
+            "default": "我不能在这个平台修改群昵称QAQ"
+          },
+          "no_character": {
+            "description": "人物卡未找到",
+            "type": "text",
+            "default": "人物卡 ID {id} 未找到"
+          },
+          "success": {
+            "description": "修改成功",
+            "type": "text",
+            "default": "昵称修改成功~"
           }
         }
       },
@@ -95,30 +366,91 @@
               "success_remark": {
                 "description": "普通掷骰成功（带备注）",
                 "type": "text",
-                "default": "{name} 的【{remark}】结果是: {result}~"
+                "default": "{name} 的 {remark} 结果是: {result}~"
               },
               "error": {
                 "description": "普通掷骰错误",
                 "type": "text",
-                "default": "骰子表达式错误: {error}"
+                "default": "掷骰错误: {error}"
+              }
+            }
+          },
+          "vampire": {
+            "description": "吸血鬼骰",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "吸血鬼骰成功",
+                "type": "text",
+                "default": "{name} 的结果是: {result}~"
+              },
+              "error": {
+                "description": "吸血鬼骰错误",
+                "type": "text",
+                "default": "吸血鬼掷骰错误: {error}"
+              },
+              "success_result": {
+                "description": "成功结果",
+                "type": "text",
+                "default": "，成功！成功数为{success_num}~"
+              },
+              "great_failure": {
+                "description": "大失败",
+                "type": "text",
+                "default": "，大失败！！！"
+              },
+              "failure": {
+                "description": "失败",
+                "type": "text",
+                "default": "，失败！"
               }
             }
           },
           "hidden": {
-            "description": "隐骰",
+            "description": "隐藏掷骰",
             "type": "object",
             "items": {
               "success": {
-                "description": "隐骰成功",
+                "description": "隐藏掷骰成功",
                 "type": "text",
-                "default": "已经进行了隐密掷骰: {result}"
+                "default": "隐藏掷骰结果: {result}"
               },
               "error": {
-                "description": "隐骰错误",
+                "description": "隐藏掷骰错误",
                 "type": "text",
-                "default": "隐骰表达式错误: {error}"
+                "default": "隐藏掷骰错误: {error}"
+              },
+              "group": {
+                "description": "隐藏掷骰提示",
+                "type": "text",
+                "default": "已进行隐藏掷骰~"
               }
             }
+          },
+          "detail": {
+            "description": "掷骰详情",
+            "type": "text",
+            "default": "掷骰详情: {detail}"
+          },
+          "expression_error": {
+            "description": "表达式错误",
+            "type": "text",
+            "default": "表达式错误: {error}"
+          },
+          "format_error": {
+            "description": "格式错误",
+            "type": "text",
+            "default": "⚠️ 格式错误 `{expr}`"
+          },
+          "limit_error": {
+            "description": "限制错误",
+            "type": "text",
+            "default": "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
+          },
+          "modifier_error": {
+            "description": "修正值错误",
+            "type": "text",
+            "default": "⚠️ 修正值 `{modifier}` 无效！"
           },
           "roll_types": {
             "description": "掷骰类型",
@@ -136,51 +468,25 @@
               }
             }
           },
-          "format_error": {
+          "vampire_roll": {
+            "description": "吸血鬼掷骰结果",
             "type": "text",
-            "default": "无法解析骰子表达式: {expr}"
-          },
-          "limit_error": {
-            "type": "text",
-            "default": "掷骰参数超过限制"
-          },
-          "normal_dice": {
-            "type": "text",
-            "default": "{dice_count}d{dice_faces}: [{rolls}] = {subtotal}"
+            "default": "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
           },
           "keep_highest": {
+            "description": "保留最高",
             "type": "text",
-            "default": "{dice_count}d{dice_faces}k{keep_highest}: [{rolls}]保留最高{keep_highest}个: {kept} = {subtotal}"
+            "default": "{dice_count}d{dice_faces}k{keep_highest}={subtotal} [{kept} | {dropped}]"
+          },
+          "normal_dice": {
+            "description": "普通掷骰结果",
+            "type": "text",
+            "default": "{dice_count}d{dice_faces}={subtotal} [{rolls}]"
           },
           "dice_with_modifier": {
+            "description": "带修正值的掷骰",
             "type": "text",
-            "default": "{dice_count}d{dice_faces}{modifier}: [{rolls}]{modifier} = {total}"
-          },
-          "modifier_error": {
-            "type": "text",
-            "default": "无效的修饰符: {modifier}"
-          },
-          "vampire_roll": {
-            "type": "text",
-            "default": "{dice_count}d10v{vampire_difficulty}: [{rolls}]"
-          },
-          "vampire": {
-            "description": "吸血鬼骰结果",
-            "type": "object",
-            "items": {
-              "success_result": {
-                "type": "text",
-                "default": " 成功 ({success_num} 次成功)"
-              },
-              "great_failure": {
-                "type": "text",
-                "default": " 大失败"
-              },
-              "failure": {
-                "type": "text",
-                "default": " 失败"
-              }
-            }
+            "default": "{dice_count}d{dice_faces}{modifier}={subtotal} [{rolls}] {modifier} = {total}"
           }
         }
       },
@@ -188,10 +494,299 @@
         "description": "理智相关输出",
         "type": "object",
         "items": {
-          "check_result_loss": {
-            "description": "理智检定失败",
+          "check_result": {
+            "description": "理智检定结果",
+            "type": "object",
+            "items": {
+              "loss": {
+                "description": "理智检定失败",
+                "type": "text",
+                "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san}"
+              },
+              "no_loss": {
+                "description": "理智检定无损失",
+                "type": "text",
+                "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → 无损失"
+              },
+              "great_loss": {
+                "description": "理智检定重大损失",
+                "type": "text",
+                "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san} (重大损失)"
+              },
+              "zero": {
+                "description": "理智归零",
+                "type": "text",
+                "default": "{name} 理智归零"
+              }
+            }
+          },
+          "check": {
+            "description": "理智检定",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "成功",
+                "type": "text",
+                "default": "成功！"
+              },
+              "failure": {
+                "description": "失败",
+                "type": "text",
+                "default": "失败..."
+              }
+            }
+          },
+          "temporary_insanity": {
+            "description": "临时疯狂",
             "type": "text",
-            "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san}"
+            "default": "临时疯狂: {result}"
+          },
+          "long_term_insanity": {
+            "description": "长期疯狂",
+            "type": "text",
+            "default": "长期疯狂: {result}"
+          },
+          "temporary_insanity_types": {
+            "description": "临时疯狂类型",
+            "type": "list",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "失忆：调查员只记得最后身处的安全地点，却没有任何来到这里的记忆。这将会持续 1D10 轮。",
+              "假性残疾：调查员陷入心理性的失明、失聪或躯体缺失感，持续 1D10 轮。",
+              "暴力倾向：调查员对周围所有人（敌人和同伴）展开攻击，持续 1D10 轮。",
+              "偏执：调查员陷入严重的偏执妄想（所有人都想伤害他），持续 1D10 轮。",
+              "人际依赖：调查员误认为某人是他的重要之人，并据此行动，持续 1D10 轮。",
+              "昏厥：调查员当场昏倒，1D10 轮后苏醒。",
+              "逃避行为：调查员试图用任何方式逃离当前场所，持续 1D10 轮。",
+              "歇斯底里：调查员陷入极端情绪（大笑、哭泣、尖叫等），持续 1D10 轮。",
+              "恐惧：骰 1D100 或由守秘人选择一个恐惧症，调查员会想象它存在，持续 1D10 轮。",
+              "躁狂：骰 1D100 或由守秘人选择一个躁狂症，调查员会沉溺其中，持续 1D10 轮。"
+            ]
+          },
+          "long_term_insanity_types": {
+            "description": "长期疯狂类型",
+            "type": "list",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "失忆：调查员发现自己身处陌生地方，并忘记自己是谁。记忆会缓慢恢复。",
+              "被窃：调查员 1D10 小时后清醒，发现自己身上贵重物品丢失。",
+              "遍体鳞伤：调查员 1D10 小时后清醒，身体有严重伤痕（生命值剩一半）。",
+              "暴力倾向：调查员可能在疯狂期间杀人或造成重大破坏。",
+              "极端信念：调查员疯狂地执行某个信仰（如宗教狂热、政治极端），并采取极端行动。",
+              "重要之人：调查员疯狂追求某个他在意的人，不顾一切地接近该人。",
+              "被收容：调查员在精神病院或警察局醒来，完全不记得发生了什么。",
+              "逃避行为：调查员在远离原地点的地方醒来，可能在荒郊野外或陌生城市。",
+              "恐惧：调查员患上一种新的恐惧症（骰 1D100 或由守秘人选择）。",
+              "躁狂：调查员患上一种新的躁狂症（骰 1D100 或由守秘人选择）。"
+            ]
+          }
+        }
+      },
+      "initiative": {
+        "description": "先攻相关输出",
+        "type": "object",
+        "items": {
+          "add": {
+            "description": "添加先攻",
+            "type": "text",
+            "default": "{name} 的先攻 = {value}"
+          },
+          "remove_name": {
+            "description": "移除先攻",
+            "type": "text",
+            "default": "已移除 {name} 的先攻"
+          },
+          "clear": {
+            "description": "清空先攻",
+            "type": "text",
+            "default": "先攻列表已清空"
+          },
+          "empty": {
+            "description": "先攻列表为空",
+            "type": "text",
+            "default": "先攻列表为空"
+          },
+          "list": {
+            "description": "先攻列表",
+            "type": "text",
+            "default": "先攻列表:\\n{content}"
+          },
+          "next_turn": {
+            "description": "下一轮",
+            "type": "text",
+            "default": "轮到 {name} (先攻 {value})"
+          },
+          "current_marker": {
+            "description": "当前标记",
+            "type": "text",
+            "default": "←当前"
+          },
+          "empty_no_advance": {
+            "description": "无法推进",
+            "type": "text",
+            "default": "先攻列表为空，无法推进回合"
+          },
+          "turn_end": {
+            "description": "回合结束",
+            "type": "text",
+            "default": "{current_name}的回合结束 → \\n {next_name}的回合 (先攻: {next_init})"
+          },
+          "delete_player": {
+            "description": "删除玩家",
+            "type": "text",
+            "default": "已删除角色{player_name}的先攻"
+          },
+          "add_update_player": {
+            "description": "添加/更新玩家",
+            "type": "text",
+            "default": "已添加/更新{player_name}的先攻：{init_value}"
+          },
+          "current_list": {
+            "description": "当前先攻列表",
+            "type": "text",
+            "default": "当前先攻列表为：\\n{content}"
+          }
+        }
+      },
+      "character_list": {
+        "description": "角色生成模板",
+        "type": "object",
+        "items": {
+          "coc": {
+            "description": "COC角色列表",
+            "type": "text",
+            "default": "{characters}"
+          },
+          "dnd": {
+            "description": "DND角色列表",
+            "type": "text",
+            "default": "{characters}"
+          }
+        }
+      },
+      "character_sheet": {
+        "description": "角色卡",
+        "type": "object",
+        "items": {
+          "coc": {
+            "description": "COC角色卡",
+            "type": "text",
+            "default": "第 {index} 号调查员\n力量: {STR}  体质: {CON}  体型: {SIZ}\n敏捷: {DEX}  外貌: {APP}  智力: {INT}\n意志: {POW}  教育: {EDU}\n生命: {HP}  魔力: {MP}  理智: {SAN}  幸运: {LUCK}\nDB: {DB}  总和 : {TOTAL} / {TOTAL + LUCK}"
+          },
+          "dnd": {
+            "description": "DND角色卡",
+            "type": "text",
+            "default": "第 {index} 位冒险者\n[{data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]}] → 共计 {sum_data}"
+          }
+        }
+      },
+      "generated_names": {
+        "description": "名字生成",
+        "type": "text",
+        "default": "生成 {num} 个名字: {names}"
+      },
+      "log": {
+        "description": "日志相关输出",
+        "type": "object",
+        "items": {
+          "no_active_session": {
+            "description": "无活跃会话",
+            "type": "text",
+            "default": "当前没有正在进行的日志会话。"
+          },
+          "message_added": {
+            "description": "消息已记录",
+            "type": "text",
+            "default": "消息已记录到当前日志。"
+          },
+          "unfinished_session": {
+            "description": "未完成会话",
+            "type": "text",
+            "default": "检测到未完成的日志『{session_name}』，是否继续？"
+          },
+          "new_session": {
+            "description": "新会话",
+            "type": "text",
+            "default": "新日志『{session_name}』已创建。"
+          },
+          "session_not_found": {
+            "description": "会话未找到",
+            "type": "text",
+            "default": "日志『{session_name}』不存在。"
+          },
+          "session_finished": {
+            "description": "会话结束",
+            "type": "text",
+            "default": "日志『{session_name}』已结束并归档。"
+          },
+          "session_active": {
+            "description": "会话活跃",
+            "type": "text",
+            "default": "日志『{session_name}』仍在进行中。"
+          },
+          "session_resumed": {
+            "description": "会话恢复",
+            "type": "text",
+            "default": "日志『{session_name}』已恢复。"
+          },
+          "no_paused_session": {
+            "description": "无暂停会话",
+            "type": "text",
+            "default": "没有已暂停的日志。"
+          },
+          "session_paused": {
+            "description": "会话暂停",
+            "type": "text",
+            "default": "日志『{session_name}』已暂停。"
+          },
+          "no_unfinished_session": {
+            "description": "无未完成会话",
+            "type": "text",
+            "default": "没有未完成的日志。"
+          },
+          "session_halted": {
+            "description": "会话中止",
+            "type": "text",
+            "default": "日志『{session_name}』已中止。"
+          },
+          "session_line": {
+            "description": "会话行",
+            "type": "text",
+            "default": "▸ {session_name} · {start_time} · {status} · {message_count} 条记录"
+          },
+          "no_sessions": {
+            "description": "无会话",
+            "type": "text",
+            "default": "尚无任何日志记录。"
+          },
+          "session_deleted": {
+            "description": "会话删除",
+            "type": "text",
+            "default": "日志『{session_name}』已删除。"
+          },
+          "session_exported": {
+            "description": "会话导出",
+            "type": "text",
+            "default": "日志『{session_name}』已导出，文件名：{file_name}"
+          },
+          "export_failed": {
+            "description": "导出失败",
+            "type": "text",
+            "default": "日志导出失败：{error}"
+          },
+          "send_file_failed": {
+            "description": "发送文件失败",
+            "type": "text",
+            "default": "发送日志文件失败：{error}"
+          },
+          "delete_error": {
+            "description": "删除错误",
+            "type": "text",
+            "default": "删除日志失败。正确用法：.log del <日志名>"
           }
         }
       }
