@@ -1,0 +1,293 @@
+{
+  "output": {
+    "description": "输出配置",
+    "type": "object",
+    "hint": "配置各种输出文本信息",
+    "items": {
+      "skill_check": {
+        "description": "技能判定输出",
+        "type": "object",
+        "items": {
+          "normal": {
+            "description": "普通技能判定",
+            "type": "text",
+            "default": "<{name}> 的【{skill_name}】检定: {roll_result}/{skill_value} → {result}"
+          },
+          "penalty": {
+            "description": "惩罚骰",
+            "type": "text",
+            "default": "<{name}> 惩罚骰: {new_tens_digits} → 最终结果: {final_y}/{skill_value} → {result}"
+          },
+          "bonus": {
+            "description": "奖励骰",
+            "type": "text",
+            "default": "<{name}> 奖励骰: {new_tens_digits} → 最终结果: {final_y}/{skill_value} → {result}"
+          }
+        }
+      },
+      "rp": {
+        "description": "运势输出",
+        "type": "object",
+        "items": {
+          "today": {
+            "description": "运势查询结果",
+            "type": "text",
+            "default": "{name}今日的运势是: {rp}/100 哦~"
+          }
+        }
+      },
+      "fireball": {
+        "description": "火球术输出",
+        "type": "object",
+        "items": {
+          "result": {
+            "description": "火球术伤害结果",
+            "type": "text",
+            "default": "{ring} 环火球术伤害: {breakdown} = {total}"
+          },
+          "low": {
+            "description": "火球术失败提示",
+            "type": "text",
+            "default": "火球术失败: 环数不足"
+          }
+        }
+      },
+      "coc_roll": {
+        "description": "COC判定输出",
+        "type": "object",
+        "items": {
+          "set_rule": {
+            "description": "设置规则提示",
+            "type": "text",
+            "default": "收到！接下来大成功/大失败将会按照{rule}规则进行哦~"
+          }
+        }
+      },
+      "pc": {
+        "description": "人物卡相关输出",
+        "type": "object",
+        "items": {
+          "create_success": {
+            "description": "创建成功",
+            "type": "text",
+            "default": "人物卡 [{name}] 已创建 (ID: {id})"
+          },
+          "change_success": {
+            "description": "切换成功",
+            "type": "text",
+            "default": "已切换到人物卡 [{name}]"
+          }
+        }
+      },
+      "dice": {
+        "description": "掷骰输出",
+        "type": "object",
+        "items": {
+          "normal_success": {
+            "description": "普通掷骰成功",
+            "type": "text",
+            "default": "{name} 的结果是: {result}~"
+          }
+        }
+      },
+      "san": {
+        "description": "理智相关输出",
+        "type": "object",
+        "items": {
+          "check_result_loss": {
+            "description": "理智检定失败",
+            "type": "text",
+            "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san}"
+          }
+        }
+      }
+    }
+  },
+  "dice": {
+    "description": "掷骰配置",
+    "type": "object",
+    "hint": "配置掷骰的默认参数和限制",
+    "items": {
+      "default_faces": {
+        "description": "默认骰子面数",
+        "type": "int",
+        "hint": "用于隐藏掷骰等场景的默认骰子面数",
+        "default": 100,
+        "slider": {
+          "min": 1,
+          "max": 100,
+          "step": 1
+        }
+      },
+      "max_count": {
+        "description": "骰子最大个数",
+        "type": "int",
+        "hint": "一次掷骰最多可投掷的骰子个数",
+        "default": 100,
+        "slider": {
+          "min": 1,
+          "max": 1000,
+          "step": 10
+        }
+      },
+      "max_faces": {
+        "description": "骰子最大面数",
+        "type": "int",
+        "hint": "骰子最多可以有多少面",
+        "default": 1000,
+        "slider": {
+          "min": 10,
+          "max": 10000,
+          "step": 100
+        }
+      },
+      "vampire_default_difficulty": {
+        "description": "吸血鬼骰默认难度",
+        "type": "int",
+        "hint": "吸血鬼掷骰的默认难度值",
+        "default": 6,
+        "slider": {
+          "min": 1,
+          "max": 10,
+          "step": 1
+        }
+      }
+    }
+  },
+  "initiative": {
+    "description": "先攻配置",
+    "type": "object",
+    "hint": "先攻系统的配置",
+    "items": {
+      "min": {
+        "description": "先攻最小值",
+        "type": "int",
+        "default": 1
+      },
+      "max": {
+        "description": "先攻最大值",
+        "type": "int",
+        "default": 20
+      }
+    }
+  },
+  "sanity": {
+    "description": "理智系统配置",
+    "type": "object",
+    "hint": "SAN检定和疯狂相关配置",
+    "items": {
+      "san_check_min": {
+        "description": "SAN检定最小值",
+        "type": "int",
+        "default": 1
+      },
+      "san_check_max": {
+        "description": "SAN检定最大值",
+        "type": "int",
+        "default": 100
+      },
+      "insanity_dice": {
+        "description": "疯狂症状骰子",
+        "type": "string",
+        "hint": "疯狂症状骰子表达式",
+        "default": "1D10"
+      }
+    }
+  },
+  "character": {
+    "description": "角色生成配置",
+    "type": "object",
+    "hint": "COC和DND角色生成的配置",
+    "items": {
+      "coc_three_d6_multiplier": {
+        "description": "3d6 * 倍数",
+        "type": "int",
+        "hint": "COC角色生成中3d6的倍数",
+        "default": 5
+      },
+      "coc_two_d6_bonus": {
+        "description": "2d6+6中的加值",
+        "type": "int",
+        "default": 6
+      },
+      "coc_two_d6_multiplier": {
+        "description": "2d6+6的倍数",
+        "type": "int",
+        "default": 5
+      },
+      "hp_formula": {
+        "description": "HP计算公式",
+        "type": "text",
+        "hint": "使用 SIZ, CON 等变量",
+        "default": "(SIZ + CON) // 10"
+      },
+      "mp_formula": {
+        "description": "MP计算公式",
+        "type": "text",
+        "hint": "使用 POW 等变量",
+        "default": "POW // 5"
+      },
+      "san_formula": {
+        "description": "SAN计算公式",
+        "type": "text",
+        "hint": "使用 POW 等变量",
+        "default": "POW"
+      },
+      "dnd_drop_lowest": {
+        "description": "DND 4d6去最低个数",
+        "type": "int",
+        "default": 1
+      }
+    }
+  },
+  "coc_rules": {
+    "description": "COC规则配置",
+    "type": "object",
+    "hint": "大成功/大失败规则配置",
+    "items": {
+      "default_rule": {
+        "description": "默认规则",
+        "type": "int",
+        "hint": "选择默认的成功/失败规则 (1-4)",
+        "default": 2,
+        "slider": {
+          "min": 1,
+          "max": 4,
+          "step": 1
+        }
+      }
+    }
+  },
+  "names": {
+    "description": "名字生成配置",
+    "type": "object",
+    "hint": "随机名字生成的配置",
+    "items": {
+      "default_language": {
+        "description": "默认语言",
+        "type": "string",
+        "hint": "生成名字的默认语言",
+        "default": "cn",
+        "options": ["cn", "en", "us", "jp"]
+      }
+    }
+  },
+  "growth": {
+    "description": "成长系统配置",
+    "type": "object",
+    "hint": "技能成长检定的配置",
+    "items": {
+      "success_threshold": {
+        "description": "成长成功阈值",
+        "type": "int",
+        "hint": "达到此阈值才能成长",
+        "default": 95,
+        "slider": {
+          "min": 1,
+          "max": 100,
+          "step": 1
+        }
+      }
+    }
+  }
+}

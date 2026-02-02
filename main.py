@@ -9,6 +9,7 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api import message_components as Comp
 from astrbot.api.all import *
 from astrbot.api import logger
+from astrbot.api import AstrBotConfig
 
 # ========== SYSTEM IMPORT ========== #
 import json
@@ -17,13 +18,12 @@ import time
 import os
 import uuid
 import sqlite3
-from faker import Faker
 
 # ========== MODULE IMPORT ========== #
 from .component import character as charmod
 from .component import dice as dice_mod
 from .component import sanity
-from .component.output import get_output, get_config
+from .component.output import get_output, get_config, set_config
 from .component.utils import generate_names, roll_character, format_character, roll_dnd_character, format_dnd_character
 from .component.rules import modify_coc_great_sf_rule_command
 from .component.log import JSONLoggerCore
@@ -59,9 +59,11 @@ async def init():
 
 @register("astrbot_plugin_TRPG", "shiroling", "TRPG玩家用骰", "1.0.3")
 class DicePlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig):
         self.wakeup_prefix = [".", "。", "/"]
-
+        # 初始化配置系统
+        set_config(config)
+        
         super().__init__(context)
 
     async def save_log(self, group_id, content) :
