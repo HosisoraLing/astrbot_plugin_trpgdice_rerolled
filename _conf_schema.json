@@ -83,10 +83,104 @@
         "description": "掷骰输出",
         "type": "object",
         "items": {
-          "normal_success": {
-            "description": "普通掷骰成功",
+          "normal": {
+            "description": "普通掷骰",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "普通掷骰成功",
+                "type": "text",
+                "default": "{name} 的结果是: {result}~"
+              },
+              "success_remark": {
+                "description": "普通掷骰成功（带备注）",
+                "type": "text",
+                "default": "{name} 的【{remark}】结果是: {result}~"
+              },
+              "error": {
+                "description": "普通掷骰错误",
+                "type": "text",
+                "default": "骰子表达式错误: {error}"
+              }
+            }
+          },
+          "hidden": {
+            "description": "隐骰",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "隐骰成功",
+                "type": "text",
+                "default": "已经进行了隐密掷骰: {result}"
+              },
+              "error": {
+                "description": "隐骰错误",
+                "type": "text",
+                "default": "隐骰表达式错误: {error}"
+              }
+            }
+          },
+          "roll_types": {
+            "description": "掷骰类型",
+            "type": "object",
+            "items": {
+              "bonus": {
+                "description": "奖励骰",
+                "type": "text",
+                "default": "奖励骰"
+              },
+              "penalty": {
+                "description": "惩罚骰",
+                "type": "text",
+                "default": "惩罚骰"
+              }
+            }
+          },
+          "format_error": {
             "type": "text",
-            "default": "{name} 的结果是: {result}~"
+            "default": "无法解析骰子表达式: {expr}"
+          },
+          "limit_error": {
+            "type": "text",
+            "default": "掷骰参数超过限制"
+          },
+          "normal_dice": {
+            "type": "text",
+            "default": "{dice_count}d{dice_faces}: [{rolls}] = {subtotal}"
+          },
+          "keep_highest": {
+            "type": "text",
+            "default": "{dice_count}d{dice_faces}k{keep_highest}: [{rolls}]保留最高{keep_highest}个: {kept} = {subtotal}"
+          },
+          "dice_with_modifier": {
+            "type": "text",
+            "default": "{dice_count}d{dice_faces}{modifier}: [{rolls}]{modifier} = {total}"
+          },
+          "modifier_error": {
+            "type": "text",
+            "default": "无效的修饰符: {modifier}"
+          },
+          "vampire_roll": {
+            "type": "text",
+            "default": "{dice_count}d10v{vampire_difficulty}: [{rolls}]"
+          },
+          "vampire": {
+            "description": "吸血鬼骰结果",
+            "type": "object",
+            "items": {
+              "success_result": {
+                "type": "text",
+                "default": " 成功 ({success_num} 次成功)"
+              },
+              "great_failure": {
+                "type": "text",
+                "default": " 大失败"
+              },
+              "failure": {
+                "type": "text",
+                "default": " 失败"
+              }
+            }
           }
         }
       },
@@ -151,6 +245,65 @@
           "max": 10,
           "step": 1
         }
+      },
+      "limits": {
+        "description": "骰子限制配置",
+        "type": "object",
+        "items": {
+          "max_count": {
+            "description": "骰子最大个数",
+            "type": "int",
+            "default": 100
+          },
+          "max_faces": {
+            "description": "骰子最大面数",
+            "type": "int",
+            "default": 1000
+          }
+        }
+      },
+      "bonus_penalty": {
+        "description": "奖励/惩罚骰配置",
+        "type": "object",
+        "items": {
+          "dice_count": {
+            "description": "奖励/惩罚骰个数",
+            "type": "int",
+            "default": 1
+          },
+          "base_faces": {
+            "description": "奖励/惩罚骰基础面数",
+            "type": "int",
+            "default": 100
+          }
+        }
+      },
+      "fireball": {
+        "description": "火球术配置",
+        "type": "object",
+        "items": {
+          "base_dice": {
+            "description": "火球术基础骰子数",
+            "type": "int",
+            "default": 8
+          },
+          "dice_per_ring": {
+            "description": "每环增加的骰子数",
+            "type": "int",
+            "default": 1
+          }
+        }
+      },
+      "rp": {
+        "description": "运势配置",
+        "type": "object",
+        "items": {
+          "max_value": {
+            "description": "运势最大值",
+            "type": "int",
+            "default": 100
+          }
+        }
       }
     }
   },
@@ -168,6 +321,22 @@
         "description": "先攻最大值",
         "type": "int",
         "default": 20
+      },
+      "dice_range": {
+        "description": "先攻掷骰范围",
+        "type": "object",
+        "items": {
+          "min": {
+            "description": "先攻掷骰最小值",
+            "type": "int",
+            "default": 1
+          },
+          "max": {
+            "description": "先攻掷骰最大值",
+            "type": "int",
+            "default": 20
+          }
+        }
       }
     }
   },
@@ -191,6 +360,59 @@
         "type": "string",
         "hint": "疯狂症状骰子表达式",
         "default": "1D10"
+      },
+      "dice_range": {
+        "description": "理智检定掷骰范围",
+        "type": "object",
+        "items": {
+          "min": {
+            "description": "理智检定掷骰最小值",
+            "type": "int",
+            "default": 1
+          },
+          "max": {
+            "description": "理智检定掷骰最大值",
+            "type": "int",
+            "default": 100
+          }
+        }
+      },
+      "insanity_dice_config": {
+        "description": "疯狂症状骰子配置",
+        "type": "object",
+        "items": {
+          "dice": {
+            "description": "疯狂症状骰子表达式",
+            "type": "string",
+            "default": "1D10"
+          },
+          "min": {
+            "description": "疯狂症状骰子最小值",
+            "type": "int",
+            "default": 1
+          },
+          "max": {
+            "description": "疯狂症状骰子最大值",
+            "type": "int",
+            "default": 10
+          }
+        }
+      },
+      "phobia_mania_range": {
+        "description": "恐惧/狂躁症状范围",
+        "type": "object",
+        "items": {
+          "min": {
+            "description": "恐惧/狂躁症状最小值",
+            "type": "int",
+            "default": 1
+          },
+          "max": {
+            "description": "恐惧/狂躁症状最大值",
+            "type": "int",
+            "default": 100
+          }
+        }
       }
     }
   },
@@ -237,6 +459,118 @@
         "description": "DND 4d6去最低个数",
         "type": "int",
         "default": 1
+      },
+      "coc": {
+        "description": "COC角色生成配置",
+        "type": "object",
+        "items": {
+          "dice": {
+            "description": "COC骰子配置",
+            "type": "object",
+            "items": {
+              "three_d6": {
+                "description": "3d6配置",
+                "type": "object",
+                "items": {
+                  "dice_count": {
+                    "description": "骰子个数",
+                    "type": "int",
+                    "default": 3
+                  },
+                  "dice_faces": {
+                    "description": "骰子面数",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "multiplier": {
+                    "description": "倍数",
+                    "type": "int",
+                    "default": 5
+                  }
+                }
+              },
+              "two_d6_plus_6": {
+                "description": "2d6+6配置",
+                "type": "object",
+                "items": {
+                  "dice_count": {
+                    "description": "骰子个数",
+                    "type": "int",
+                    "default": 2
+                  },
+                  "dice_faces": {
+                    "description": "骰子面数",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "bonus": {
+                    "description": "加值",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "multiplier": {
+                    "description": "倍数",
+                    "type": "int",
+                    "default": 5
+                  }
+                }
+              }
+            }
+          },
+          "luck_dice": {
+            "description": "幸运骰配置",
+            "type": "object",
+            "items": {
+              "dice_count": {
+                "description": "骰子个数",
+                "type": "int",
+                "default": 3
+              },
+              "dice_faces": {
+                "description": "骰子面数",
+                "type": "int",
+                "default": 6
+              },
+              "multiplier": {
+                "description": "倍数",
+                "type": "int",
+                "default": 5
+              }
+            }
+          }
+        }
+      },
+      "dnd": {
+        "description": "DND角色生成配置",
+        "type": "object",
+        "items": {
+          "dice": {
+            "description": "DND骰子配置",
+            "type": "object",
+            "items": {
+              "dice_count": {
+                "description": "骰子个数",
+                "type": "int",
+                "default": 4
+              },
+              "dice_faces": {
+                "description": "骰子面数",
+                "type": "int",
+                "default": 6
+              },
+              "drop_lowest": {
+                "description": "去最低个数",
+                "type": "int",
+                "default": 1
+              }
+            }
+          },
+          "attributes_count": {
+            "description": "属性个数",
+            "type": "int",
+            "default": 6
+          }
+        }
       }
     }
   },
@@ -255,6 +589,11 @@
           "max": 4,
           "step": 1
         }
+      },
+      "rule_strings": {
+        "description": "规则字符串列表",
+        "type": "list",
+        "default": ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"]
       }
     }
   },
@@ -269,6 +608,11 @@
         "hint": "生成名字的默认语言",
         "default": "cn",
         "options": ["cn", "en", "us", "jp"]
+      },
+      "languages": {
+        "description": "语言配置",
+        "type": "object",
+        "default": {}
       }
     }
   },
@@ -287,6 +631,18 @@
           "max": 100,
           "step": 1
         }
+      }
+    }
+  },
+  "db_build": {
+    "description": "数据库构建配置",
+    "type": "object",
+    "hint": "数据库构建相关配置",
+    "items": {
+      "table": {
+        "description": "数据库表配置",
+        "type": "list",
+        "default": []
       }
     }
   }

@@ -37,8 +37,8 @@ def parse_dice_expression(expression):
     expression = expression.replace("x", "*").replace("X", "*")
 
     # 从配置获取骰子限制
-    max_count = get_config("dice.limits.max_count", 100)
-    max_faces = get_config("dice.limits.max_faces", 1000)
+    max_count = get_config("dice.max_count", 100)
+    max_faces = get_config("dice.max_faces", 1000)
     vampire_default_difficulty = get_config("dice.vampire_default_difficulty", 6)
 
     match_repeat = re.match(r"(\d+)?#(.+)", expression) # Match 3#2d20
