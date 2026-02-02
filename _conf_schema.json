@@ -593,6 +593,9 @@
       "rule_strings": {
         "description": "规则字符串列表",
         "type": "list",
+        "items": {
+          "type": "string"
+        },
         "default": ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"]
       }
     }
@@ -612,6 +615,9 @@
       "languages": {
         "description": "语言配置",
         "type": "object",
+        "items": {
+          "type": "string"
+        },
         "default": {}
       }
     }
@@ -642,6 +648,9 @@
       "table": {
         "description": "数据库表配置",
         "type": "list",
+        "items": {
+          "type": "object"
+        },
         "default": []
       }
     }
