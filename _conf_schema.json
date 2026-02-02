@@ -615,9 +615,7 @@
       "languages": {
         "description": "语言配置",
         "type": "object",
-        "items": {
-          "type": "string"
-        },
+        "items": {},
         "default": {}
       }
     }
