@@ -18,6 +18,7 @@ import time
 import os
 import uuid
 import sqlite3
+import faker
 
 # ========== MODULE IMPORT ========== #
 from .component import character as charmod
