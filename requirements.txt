@@ -1,0 +1,5 @@
+# AstrBot TRPG Dice Plugin Dependencies
+# This plugin requires the AstrBot framework to be installed separately
+
+# External dependencies
+faker>=19.0.0
