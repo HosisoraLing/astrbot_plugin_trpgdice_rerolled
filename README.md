@@ -10,16 +10,18 @@
 
 ## 安装
 
+**推荐**：使用Astrbot插件市场安装
+
+或：
+
 1. 克隆仓库到本地：
    ```bash
-   git clone https://github.com/HosisoraLing/Astrbot_plugin_TRPGdice-Rerolled.git
+   git clone https://github.com/HosisoraLing/astrbot_plugin_trpgdice_rerolled.git
    ````
 
-2. 将插件文件/目录放入 Astrbot 的插件目录（plugin folder）。
+2. 将插件文件/目录放入 Astrbot 的插件目录。
 
 3. 启动或重启 Astrbot，确认控制台输出已加载本插件。
-
-> 如果 Astrbot 有插件管理命令或配置文件，请根据 Astrbot 的文档把本插件添加到插件列表中。
 
 ---
 
@@ -43,7 +45,7 @@
   - 支持导出记录，便于存档和复盘
 
 - **自定义风格回复**
-  - 将所有回复集成到 `config.yaml` 中，方便自由修改
+  - 可在Astrbot插件配置中自由修改
 
 - **更多方便的功能**
   - 生成名字、抽取恐慌症状等...
