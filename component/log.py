@@ -301,15 +301,15 @@ class JSONLoggerCore:
             ts = int(m.get("timestamp", time.time()))
             time_str = time.strftime(
                 "%Y/%m/%d %H:%M:%S",
-                time.localtime(ts + 8 * 3600)
+                time.localtime(ts)
             )
             export_data["items"].append({
-                "nickname": m.get("nickname"),
-                "IMUserId": m.get("user_id"),
+                "nickname": m.get("nickname", ""),
+                "IMUserId": str(m.get("user_id", "")),
                 "time": time_str,
                 "message": m.get("text", ""),
                 "images": m.get("images", []),
-                "isDice": False
+                "isDice": m.get("isDice", False)
             })
 
         exports_dir = os.path.join(self.base_dir, "exports")

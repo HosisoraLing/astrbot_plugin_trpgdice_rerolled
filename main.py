@@ -1,7 +1,4 @@
 import random
-import datetime
-import hashlib
-import ast
 from typing import Optional
 
 from astrbot.api.event import filter, AstrMessageEvent
@@ -12,20 +9,16 @@ from astrbot.api import logger
 from astrbot.api import AstrBotConfig
 
 # ========== SYSTEM IMPORT ========== #
-import json
 import re
 import time
 import os
-import uuid
-import sqlite3
-import faker
 
 # ========== MODULE IMPORT ========== #
 from .component import character as charmod
 from .component import dice as dice_mod
 from .component import sanity
 from .component.output import get_output, get_config, set_config
-from .component.utils import generate_names, roll_character, format_character, roll_dnd_character, format_dnd_character
+from .component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character
 from .component.rules import modify_coc_great_sf_rule_command
 from .component.log import JSONLoggerCore
 
@@ -37,12 +30,6 @@ DATA_FOLDER = PLUGIN_DIR + "/chara_data/"  # 存储人物卡的文件夹
 #先攻表
 init_list = {}
 current_index = {}
-
-log_help_str = '''.log 指令一览：
-    .log on -- 开启log记录。亚托莉会记录之后所有的对话，并保存在“群名+时间”文件夹内。（施工中）
-    .log off -- 暂停log记录。在同一群聊内再次使用.log on，可以继续记录未完成的log。（施工中）
-    .log end -- 结束log记录。亚托莉会在群聊内发送“群名+时间.txt”的log文件。（施工中）
-'''
 
 async def get_sender_nickname(client, group_id, sender_id) :
     payloads = {
@@ -58,7 +45,7 @@ async def get_sender_nickname(client, group_id, sender_id) :
 async def init():
     await logger_core.initialize()
 
-@register("astrbot_plugin_TRPG", "shiroling", "TRPG玩家用骰", "1.0.3")
+@register("astrbot_plugin_trpgdice_rerolled", "星空凌", "TRPG玩家用骰", "1.1.1")
 class DicePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         self.wakeup_prefix = [".", "。", "/"]
@@ -186,7 +173,7 @@ class DicePlugin(Star):
         user_id = event.get_sender_id()
         chara_id = charmod.get_current_character_id(user_id)
         if not chara_id:
-            yield get_output("pc.show.no_active")
+            yield event.plain_result(get_output("pc.show.no_active"))
             return
 
         chara_data = charmod.load_character(user_id, chara_id)
@@ -196,7 +183,7 @@ class DicePlugin(Star):
         # 正则匹配属性名 + 可选运算符 + 可选值（支持 san50, san+50, san +50, san*2, san+2d6）
         match = re.match(r"([\u4e00-\u9fa5a-zA-Z]+)\s*([+\-*]?)\s*(\d+(?:d\d+)?|\d*)", attributes_clean)
         if not match:
-            yield get_output("pc.show.attr_missing", attribute=attributes_clean)
+            yield event.plain_result(get_output("pc.show.attr_missing", attribute=attributes_clean))
             return
 
         attribute = match.group(1)
@@ -206,7 +193,7 @@ class DicePlugin(Star):
         logger.info(f"{attributes_clean}")
 
         if attribute not in chara_data["attributes"]:
-            yield get_output("pc.show.attr_missing", attribute=attribute)
+            yield event.plain_result(get_output("pc.show.attr_missing", attribute=attribute))
             return
 
         current_value = chara_data["attributes"][attribute]
@@ -227,7 +214,7 @@ class DicePlugin(Star):
             try:
                 value_num = int(value_expr)
             except ValueError:
-                yield get_output("pc.show.invalid_value", value=value_expr)
+                yield event.plain_result(get_output("pc.show.invalid_value", value=value_expr))
                 return
 
         # 根据运算符计算新值
@@ -347,7 +334,7 @@ class DicePlugin(Star):
         user_id = event.get_sender_id()
         characters = charmod.get_all_characters(user_id)
         if name not in characters:
-            yield event.plain_result(get_output("pc.change,missing", name=name))
+            yield event.plain_result(get_output("pc.change.missing", name=name))
             return
 
         charmod.set_current_character(user_id, characters[name])
@@ -682,7 +669,7 @@ class DicePlugin(Star):
         """按名字删除先攻项"""
         try:
             init_list[group_id] = [item for item in init_list[group_id] if item.name != name]
-        except:
+        except KeyError:
             init_list[group_id] = []
             current_index[group_id] = 0
     
@@ -715,7 +702,7 @@ class DicePlugin(Star):
         """格式化先攻表输出"""
         try:
             fl = init_list[group_id]
-        except:
+        except KeyError:
             init_list[group_id] = []
             return "先攻列表为空"
 
@@ -734,15 +721,15 @@ class DicePlugin(Star):
         user_id = event.get_sender_id()
         user_name = event.get_sender_name()
         if not instruction:
-            yield event.plain_result("当前先攻列表为：\n"+self.format_list(group_id))
+            yield event.plain_result(get_output("initiative.current_list", content=self.format_list(group_id)))
         elif instruction == "clr":
             self.init_clear(group_id)
-            yield event.plain_result("已清空先攻列表")
+            yield event.plain_result(get_output("initiative.cleared"))
         elif instruction == "del":
             if not player_name:
                 player_name = user_name
             self.remove_by_name(player_name, group_id)
-            yield event.plain_result(f"已删除角色{player_name}的先攻")
+            yield event.plain_result(get_output("initiative.deleted", player_name=player_name))
 
     # @filter.command("ri")
     async def roll_initiative(self , event: AstrMessageEvent, expr: str = None):
@@ -776,27 +763,27 @@ class DicePlugin(Star):
         item = self.InitiativeItem(player_name, init_value, user_id)
         self.remove_by_name(player_name, group_id)
         self.add_item(item, group_id)
-        yield event.plain_result(f"已添加/更新{player_name}的先攻：{init_value}")
+        yield event.plain_result(get_output("initiative.added", player_name=player_name, init_value=init_value))
         async for result in self.initiative(event):
             yield result
 
     @filter.command("ed")
     async def end_current_round(self , event: AstrMessageEvent):
         group_id = event.get_group_id()
+        if group_id not in init_list or not init_list[group_id]:
+            yield event.plain_result(get_output("initiative.empty_no_advance"))
+            return
+        if group_id not in current_index:
+            current_index[group_id] = 0
         current_item = init_list[group_id][current_index[group_id]]
         next_item = self.next_turn(group_id)
         if not next_item:
-            yield event.plain_result("先攻列表为空，无法推进回合")
+            yield event.plain_result(get_output("initiative.empty_no_advance"))
         else:
-            yield event.plain_result(f"{current_item.name}的回合结束 → \n {next_item.name}的回合 (先攻: {next_item.init_value})")
+            yield event.plain_result(get_output("initiative.turn_end", current_name=current_item.name, next_name=next_item.name, next_init=next_item.init_value))
 
-    
+
     # ========================================================= #
-
-    @filter.command("name")
-    async def generate_name(self, event: AstrMessageEvent, language: str = "cn", num: int = 5, sex: str = None):
-        names = generate_names(language=language, num=num, sex=sex)
-        yield event.plain_result(get_output("generated_names", num = num, names=", ".join(names)))
 
     # ------------------ CoC角色生成 ------------------ #
     @filter.command("coc")
@@ -901,8 +888,16 @@ class DicePlugin(Star):
             )
             return
         sec = grp[name]
-        ok, info = await logger_core.export_session(group, sec, name, event)
-        yield event.plain_result(info)
+        ok, file_path = await logger_core.export_session(group, sec, name)
+        if ok:
+            try:
+                from astrbot.api.message_components import File
+                file_name = f"{group}_{name}.json"
+                yield event.chain_result([File(file=file_path, name=file_name)])
+            except Exception as e:
+                yield event.plain_result(get_output("log.send_file_failed", error=str(e)))
+        else:
+            yield event.plain_result(get_output("log.export_failed", error=file_path))
 
     @log.command("stat")
     async def cmd_log_stat(self, event: AstrMessageEvent):
@@ -921,8 +916,9 @@ class DicePlugin(Star):
             "基础掷骰\n"
             "`/r 1d100` - 掷 1 个 100 面骰\n"
             "`/r 3d6+2d4-1d8` - 掷 3 个 6 面骰 + 2 个 4 面骰 - 1 个 8 面骰\n"
-            "`/r 3#1d20` - 掷 1d20 骰 3 次\n\n"
-            
+            "`/r 3#1d20` - 掷 1d20 骰 3 次\n"
+            "`/r 10d6k5` - 掷 10 个 6 面骰，保留最高 5 个\n\n"
+
             "人物卡管理\n"
             "`/pc create 名称 属性值` - 创建人物卡\n"
             "`/pc show` - 显示当前人物卡\n"
@@ -930,7 +926,7 @@ class DicePlugin(Star):
             "`/pc change 名称` - 切换当前人物卡\n"
             "`/pc update 属性 值/公式` - 更新人物卡属性\n"
             "`/pc delete 名称` - 删除人物卡\n\n"
-            
+
             "CoC 相关\n"
             "`/coc x` - 生成 x 个 CoC 角色数据\n"
             "`/ra 技能名` - 进行技能骰\n"
@@ -940,30 +936,29 @@ class DicePlugin(Star):
             "`/ti` - 生成临时疯狂症状\n"
             "`/li` - 生成长期疯狂症状\n"
             "`/en 技能名 [技能值]` - 技能成长\n"
-            "`/name [cn/en/jp] [数量]` - 随机生成名字\n"
-            "/setcoc 规则编号 - 设置COC规则\n\n"
-            
+            "`/setcoc 规则编号` - 设置COC规则\n\n"
+
             "DnD 相关\n"
             "`/dnd x` - 生成 x 个 DnD 角色属性\n"
             "`/init` - 显示当前先攻列表\n"
             "`/init clr` - 清空先攻列表\n"
-            "`/init del [角色名]` - 删除角色先攻（默认为用户名） \n"
+            "`/init del [角色名]` - 删除角色先攻（默认为用户名）\n"
             "`/ri +/- x` - 以x的调整值投掷先攻\n"
             "`/ri x [角色名]` - 将角色（默认为用户名）的先攻设置为x\n"
-            "`/ed` - 结束当前回合"
-            "`/fireball n` - 施放 n 环火球术，计算伤害\n\n"   
+            "`/ed` - 结束当前回合\n"
+            "`/fireball n` - 施放 n 环火球术，计算伤害\n\n"
 
             "其他规则\n"
-            "`/rv 骰子数量 难度` - 进行吸血鬼规则掷骰判定\n"
-            
+            "`/rv 骰子数量 难度` - 进行吸血鬼规则掷骰判定\n\n"
+
             "Log 管理\n"
-            "/log new <日志名> - 开始新的日志会话\n"
-            "/log off - 暂停当前的日志会话\n"
-            "/log on - 开始当前的日志会话\m"
-            "/log end - 结束当前的日志会话"
-            "/log del <日志名> - 删除日志会话\n"
-            "/log get <日志名> - 获取日志会话\n"
-            "/log stat <日志名> - 获取日志会话统计信息\n"
+            "`/log new <日志名>` - 开始新的日志会话\n"
+            "`/log off` - 暂停当前的日志会话\n"
+            "`/log on` - 开始当前的日志会话\n"
+            "`/log end` - 结束当前的日志会话\n"
+            "`/log del <日志名>` - 删除日志会话\n"
+            "`/log get <日志名>` - 获取日志会话\n"
+            "`/log stat <日志名>` - 获取日志会话统计信息\n"
         )
 
         yield event.plain_result(help_text)
@@ -1087,13 +1082,11 @@ class DicePlugin(Star):
                 remark = raw.strip()
                 
         elif cmd[0] == "r":
-            # 匹配完整的骰子表达式，包括运算符和数字（如 3d6+10, 2d4-1d8 等）
-            r_match = re.match(r'([0-9]*[dD][0-9]+(?:[+\-*][0-9]+(?:d[0-9]+)?)*)', message[1:])
+            # 匹配完整的骰子表达式，包括运算符、保留最高(k)和数字（如 3d6+10, 10d6k5, 2d4-1d8 等）
+            r_match = re.match(r'([0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
             if r_match:
                 expr = r_match.group(1)
                 remark = message[1+len(expr):].strip()
-                if remark:
-                    expr = expr
             else:
                 expr = message[1:].strip()
                 # 如果没有指定骰子，使用默认骰子
@@ -1131,62 +1124,4 @@ class DicePlugin(Star):
         elif cmd == "ri":
             async for result in self.roll_initiative(event, expr):
                 yield result
-                
-    # # log save    
-    # @command_group("log")
-    # async def log(self, event: AstrMessageEvent, command: str = None):
-    #     if command == 'on':
-    #         pass
-    #     elif command == 'off':
-    #         pass
-    #     elif command == 'end':
-    #         pass
-    #     elif command == 'help':
-    #         user_id = event.get_sender_id()
-    #         group_id = event.get_group_id()
-    #         client = event.bot  # 获取机器人 Client
-    #         message_id = event.message_obj.message_id
-    #         payloads = {
-    #             "group_id": group_id,
-    #             "message": [
-    #                 {
-    #                     "type": "reply",
-    #                     "data": {
-    #                         "id": message_id
-    #                     }
-    #                 },
-    #                 {
-    #                     "type": "text",
-    #                     "data": {
-    #                         "text": log_help_str
-    #                     }
-    #                 }
-    #             ]
-    #         }
-
-    #         ret = await client.api.call_action("send_group_msg", **payloads)
-    #     else:
-    #         user_id = event.get_sender_id()
-    #         group_id = event.get_group_id()
-    #         client = event.bot  # 获取机器人 Client
-    #         message_id = event.message_obj.message_id
-    #         payloads = {
-    #             "group_id": group_id,
-    #             "message": [
-    #                 {
-    #                     "type": "reply",
-    #                     "data": {
-    #                         "id": message_id
-    #                     }
-    #                 },
-    #                 {
-    #                     "type": "text",
-    #                     "data": {
-    #                         "text": f"亚托莉还没有录入指令{command}噢...请输入\".log help\"查询可用命令"
-    #                     }
-    #                 }
-    #             ]
-    #         }
-
-    #         ret = await client.api.call_action("send_group_msg", **payloads)
 

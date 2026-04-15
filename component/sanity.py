@@ -3,7 +3,7 @@ import re
 import os
 import json
 
-from .output import get_output, get_config, _config
+from .output import get_output, get_config, get_output_list
 
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,15 +15,9 @@ with open(PLUGIN_DIR + "/../data/phobias.json", "r", encoding="utf-8") as f:
 with open(PLUGIN_DIR + "/../data/mania.json", "r", encoding="utf-8") as f:
     manias = json.load(f)["manias"]
 
-# 从配置文件中获取疯狂症状类型
 def get_insanity_types(key: str):
     """从配置文件中获取疯狂症状类型列表"""
-    config = _config.get("output", {}).get("san", {})
-    types = config.get(key, [])
-    if not types:
-        # 如果配置中没有，返回空列表
-        return []
-    return types
+    return get_output_list(f"san.{key}", [])
 
 def parse_san_loss_formula(formula: str):
     """

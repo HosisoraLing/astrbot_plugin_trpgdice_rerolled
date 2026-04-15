@@ -1,54 +1,6 @@
 import random
-from faker import Faker
 
 from .output import get_output, get_config
-
-def generate_names(language="cn", num=5, sex=None):
-    """
-    批量生成随机名字，支持多语言和性别。
-    """
-    # 从配置获取默认语言和语言映射
-    default_language = get_config("names.default_language", "cn")
-    languages_config = get_config("names.languages", {})
-
-    # 如果语言为空，使用默认语言
-    if not language:
-        language = default_language
-
-    # 查找匹配的语言配置
-    locale = None
-    if language in languages_config:
-        locale = languages_config[language].get("locale")
-    else:
-        # 检查别名
-        for lang_key, lang_config in languages_config.items():
-            aliases = lang_config.get("aliases", [])
-            if language in aliases:
-                locale = lang_config.get("locale")
-                break
-
-    # 如果没有找到匹配的配置，使用默认值
-    if not locale:
-        if language == "cn" or "中" in language or language == "zh" or language == "zh_CN":
-            locale = "zh_CN"
-        elif language == "en" or "英" in language or language == "en_GB":
-            locale = "en_GB"
-        elif language == "us" or "美" in language or language == "en_US":
-            locale = "en_US"
-        elif language == "jp" or "=日" in language or language == "ja_JP":
-            locale = "ja_JP"
-        else:
-            locale = None
-
-    fake = Faker(locale=locale) if locale else Faker()
-
-    if sex == "男":
-        names = [fake.name_male() for _ in range(num)]
-    elif sex == "女":
-        names = [fake.name_female() for _ in range(num)]
-    else:
-        names = [fake.name() for _ in range(num)]
-    return names
 
 def get_db_build(str_val, siz_val):
     """

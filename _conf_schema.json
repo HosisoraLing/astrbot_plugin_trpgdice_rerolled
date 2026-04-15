@@ -1,25 +1,25 @@
 {
   "output": {
-    "description": "输出配置",
+    "description": "输出配置 - 自定义所有输出文本",
     "type": "object",
-    "hint": "配置各种输出文本信息",
+    "hint": "可自定义所有掷骰、判定和系统输出文本，使用 {变量名} 作为占位符",
     "items": {
       "skill_check": {
         "description": "技能判定输出",
         "type": "object",
         "items": {
           "normal": {
-            "description": "普通技能判定",
+            "description": "普通技能判定 (变量: name, skill_name, roll_result, skill_value, result)",
             "type": "text",
             "default": "<{name}> 的【{skill_name}】检定: {roll_result}/{skill_value} → {result}"
           },
           "penalty": {
-            "description": "惩罚骰",
+            "description": "惩罚骰 (变量: name, new_tens_digits, final_y, skill_value, result)",
             "type": "text",
             "default": "<{name}> 惩罚骰: {new_tens_digits} → 最终结果: {final_y}/{skill_value} → {result}"
           },
           "bonus": {
-            "description": "奖励骰",
+            "description": "奖励骰 (变量: name, new_tens_digits, final_y, skill_value, result)",
             "type": "text",
             "default": "<{name}> 奖励骰: {new_tens_digits} → 最终结果: {final_y}/{skill_value} → {result}"
           },
@@ -28,7 +28,7 @@
             "type": "object",
             "items": {
               "normal": {
-                "description": "普通技能判定错误",
+                "description": "普通判定错误",
                 "type": "text",
                 "default": "技能 {skill_name} 未找到"
               },
@@ -43,27 +43,6 @@
                 "default": "奖励骰参数错误: 技能 {skill_name}"
               }
             }
-          },
-          "grow_up": {
-            "description": "技能成长",
-            "type": "object",
-            "items": {
-              "success": {
-                "description": "成长成功",
-                "type": "text",
-                "default": "技能 [{skill_name}] 成长: {skill_value} → {skill_value + en_value} (+{en_value})"
-              },
-              "failure": {
-                "description": "成长失败",
-                "type": "text",
-                "default": "技能 [{skill_name}] 未成长"
-              },
-              "boost_result": {
-                "description": "成长检定结果",
-                "type": "text",
-                "default": "成长检定: {roll_result} / {skill_value} → {result}"
-              }
-            }
           }
         }
       },
@@ -72,9 +51,9 @@
         "type": "object",
         "items": {
           "today": {
-            "description": "运势查询结果",
+            "description": "运势查询 (变量: rp)",
             "type": "text",
-            "default": "{name}今日的运势是: {rp}/100 哦~"
+            "default": "今日的运势是: {rp}/100 哦~"
           }
         }
       },
@@ -83,28 +62,28 @@
         "type": "object",
         "items": {
           "result": {
-            "description": "火球术伤害结果",
+            "description": "火球术伤害 (变量: ring, breakdown, total)",
             "type": "text",
             "default": "{ring} 环火球术伤害: {breakdown} = {total}"
           },
           "low": {
-            "description": "火球术失败提示",
+            "description": "环数不足",
             "type": "text",
             "default": "火球术失败: 环数不足"
           }
         }
       },
       "coc_roll": {
-        "description": "COC判定输出",
+        "description": "COC判定结果",
         "type": "object",
         "items": {
           "set_rule": {
-            "description": "设置规则提示",
+            "description": "设置规则提示 (变量: rule)",
             "type": "text",
             "default": "收到！接下来大成功/大失败将会按照{rule}规则进行哦~"
           },
           "results": {
-            "description": "判定结果",
+            "description": "判定结果文本",
             "type": "object",
             "items": {
               "great_success": {
@@ -143,41 +122,11 @@
                 "default": "错误: {error}"
               },
               "reset": {
-                "description": "重置规则",
+                "description": "规则重置提示",
                 "type": "text",
                 "default": "判定规则已重置为 {rule} ~"
               }
             }
-          },
-          "setcoc_help": {
-            "description": "setcoc帮助",
-            "type": "text",
-            "default": "setcoc帮助：\n/setcoc 1 → {rule1}（大成功1，大失败100）\n/setcoc 2 → {rule2}（大成功1，阶段性大失败）\n/setcoc 3 → {rule3}（阶段性大成功，阶段性大失败）\n/setcoc 4 → {rule4}（大成功1~5，大失败96~100）\n/setcoc 0 → 默认规则（当前为{default_rule}）\n当前规则：{current_rule}"
-          },
-          "setcoc_rule1": {
-            "description": "规则1描述",
-            "type": "text",
-            "default": "大成功1，大失败100"
-          },
-          "setcoc_rule2": {
-            "description": "规则2描述",
-            "type": "text",
-            "default": "大成功1，阶段性大失败"
-          },
-          "setcoc_rule3": {
-            "description": "规则3描述",
-            "type": "text",
-            "default": "阶段性大成功，阶段性大失败"
-          },
-          "setcoc_rule4": {
-            "description": "规则4描述",
-            "type": "text",
-            "default": "大成功1~5，大失败96~100"
-          },
-          "setcoc_rule0": {
-            "description": "规则0描述",
-            "type": "text",
-            "default": "默认规则"
           }
         }
       },
@@ -190,12 +139,12 @@
             "type": "object",
             "items": {
               "duplicate": {
-                "description": "人物卡已存在",
+                "description": "人物卡已存在 (变量: name)",
                 "type": "text",
                 "default": "人物卡 [{name}] 已存在"
               },
               "success": {
-                "description": "创建成功",
+                "description": "创建成功 (变量: name, id)",
                 "type": "text",
                 "default": "人物卡 [{name}] 已创建 (ID: {id})"
               }
@@ -211,24 +160,29 @@
                 "default": "未选择人物卡 (.pc change)"
               },
               "load_fail": {
-                "description": "加载失败",
+                "description": "加载失败 (变量: id)",
                 "type": "text",
                 "default": "人物卡 ID {id} 不存在"
               },
               "attr_missing": {
-                "description": "属性未找到",
+                "description": "属性未找到 (变量: attribute)",
                 "type": "text",
                 "default": "属性 [{attribute}] 未找到"
               },
               "attr": {
-                "description": "属性显示",
+                "description": "属性显示 (变量: attr, value)",
                 "type": "text",
                 "default": "{attr} = {value}"
               },
               "all": {
-                "description": "所有属性",
+                "description": "所有属性 (变量: name, attributes)",
                 "type": "text",
                 "default": "{name}: {attributes}"
+              },
+              "invalid_value": {
+                "description": "无效值 (变量: value)",
+                "type": "text",
+                "default": "无效数值: {value}"
               }
             }
           },
@@ -242,7 +196,7 @@
                 "default": "无人物卡"
               },
               "result": {
-                "description": "列表结果",
+                "description": "列表结果 (变量: list)",
                 "type": "text",
                 "default": "{list}"
               }
@@ -253,12 +207,12 @@
             "type": "object",
             "items": {
               "missing": {
-                "description": "人物卡不存在",
+                "description": "人物卡不存在 (变量: name)",
                 "type": "text",
                 "default": "人物卡 [{name}] 不存在"
               },
               "success": {
-                "description": "切换成功",
+                "description": "切换成功 (变量: name)",
                 "type": "text",
                 "default": "已切换到人物卡 [{name}]"
               }
@@ -279,14 +233,9 @@
                 "default": "格式错误，示例: 力量+1"
               },
               "success": {
-                "description": "更新成功",
+                "description": "更新成功 (变量: attr, old, new)",
                 "type": "text",
                 "default": "[{attr}] {old} → {new}"
-              },
-              "batch_success": {
-                "description": "批量更新成功",
-                "type": "text",
-                "default": "已更新 {count} 项属性"
               }
             }
           },
@@ -295,33 +244,33 @@
             "type": "object",
             "items": {
               "fail": {
-                "description": "删除失败",
+                "description": "删除失败 (变量: name)",
                 "type": "text",
                 "default": "人物卡 [{name}] 不存在"
               },
               "success": {
-                "description": "删除成功",
+                "description": "删除成功 (变量: name)",
                 "type": "text",
                 "default": "人物卡 [{name}] 已删除"
               }
             }
           },
           "grow": {
-            "description": "人物卡成长",
+            "description": "技能成长",
             "type": "object",
             "items": {
               "success": {
-                "description": "成长成功",
+                "description": "成长成功 (变量: skill_name, skill_value, new_value, en_value)",
                 "type": "text",
                 "default": "技能 [{skill_name}] 成长: {skill_value} → {new_value} (+{en_value})"
               },
               "failure": {
                 "description": "成长失败",
                 "type": "text",
-                "default": "技能 [{skill_name}] 未成长"
+                "default": "技能未成长"
               },
               "boost_result": {
-                "description": "成长检定结果",
+                "description": "成长检定结果 (变量: skill_name, roll_result, skill_value, result)",
                 "type": "text",
                 "default": "成长检定: {roll_result} / {skill_value} → {result}"
               }
@@ -330,7 +279,7 @@
         }
       },
       "nick": {
-        "description": "群昵称相关输出",
+        "description": "群昵称相关",
         "type": "object",
         "items": {
           "platform_unsupported": {
@@ -339,7 +288,7 @@
             "default": "我不能在这个平台修改群昵称QAQ"
           },
           "no_character": {
-            "description": "人物卡未找到",
+            "description": "人物卡未找到 (变量: id)",
             "type": "text",
             "default": "人物卡 ID {id} 未找到"
           },
@@ -359,17 +308,17 @@
             "type": "object",
             "items": {
               "success": {
-                "description": "普通掷骰成功",
+                "description": "掷骰成功 (变量: name, result, total)",
                 "type": "text",
                 "default": "{name} 的结果是: {result}~"
               },
               "success_remark": {
-                "description": "普通掷骰成功（带备注）",
+                "description": "掷骰成功带备注 (变量: name, remark, result, total)",
                 "type": "text",
                 "default": "{name} 的 {remark} 结果是: {result}~"
               },
               "error": {
-                "description": "普通掷骰错误",
+                "description": "掷骰错误 (变量: error)",
                 "type": "text",
                 "default": "掷骰错误: {error}"
               }
@@ -380,17 +329,17 @@
             "type": "object",
             "items": {
               "success": {
-                "description": "吸血鬼骰成功",
+                "description": "吸血鬼骰结果 (变量: name, result)",
                 "type": "text",
                 "default": "{name} 的结果是: {result}~"
               },
               "error": {
-                "description": "吸血鬼骰错误",
+                "description": "吸血鬼骰错误 (变量: error)",
                 "type": "text",
                 "default": "吸血鬼掷骰错误: {error}"
               },
               "success_result": {
-                "description": "成功结果",
+                "description": "成功结果 (变量: success_num)",
                 "type": "text",
                 "default": "，成功！成功数为{success_num}~"
               },
@@ -411,80 +360,75 @@
             "type": "object",
             "items": {
               "success": {
-                "description": "隐藏掷骰成功",
+                "description": "隐藏掷骰结果 (变量: result)",
                 "type": "text",
                 "default": "隐藏掷骰结果: {result}"
               },
               "error": {
-                "description": "隐藏掷骰错误",
+                "description": "隐藏掷骰错误 (变量: error)",
                 "type": "text",
                 "default": "隐藏掷骰错误: {error}"
               },
               "group": {
-                "description": "隐藏掷骰提示",
+                "description": "群聊提示",
                 "type": "text",
                 "default": "已进行隐藏掷骰~"
               }
             }
           },
           "detail": {
-            "description": "掷骰详情",
+            "description": "掷骰详情 (变量: detail)",
             "type": "text",
             "default": "掷骰详情: {detail}"
           },
-          "expression_error": {
-            "description": "表达式错误",
-            "type": "text",
-            "default": "表达式错误: {error}"
-          },
           "format_error": {
-            "description": "格式错误",
+            "description": "格式错误 (变量: expr)",
             "type": "text",
-            "default": "⚠️ 格式错误 `{expr}`"
+            "default": "格式错误 `{expr}`"
           },
           "limit_error": {
-            "description": "限制错误",
+            "description": "超出限制",
             "type": "text",
-            "default": "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
+            "default": "骰子个数 1-100，面数 1-1000，否则非法！"
           },
           "modifier_error": {
-            "description": "修正值错误",
+            "description": "修正值错误 (变量: modifier)",
             "type": "text",
-            "default": "⚠️ 修正值 `{modifier}` 无效！"
+            "default": "修正值 `{modifier}` 无效！"
           },
           "roll_types": {
-            "description": "掷骰类型",
+            "description": "掷骰类型标签",
             "type": "object",
             "items": {
               "bonus": {
-                "description": "奖励骰",
+                "description": "奖励骰标签",
                 "type": "text",
                 "default": "奖励骰"
               },
               "penalty": {
-                "description": "惩罚骰",
+                "description": "惩罚骰标签",
                 "type": "text",
                 "default": "惩罚骰"
               }
             }
           },
           "vampire_roll": {
-            "description": "吸血鬼掷骰结果",
+            "description": "吸血鬼掷骰格式 (变量: vampire_difficulty, dice_count, rolls)",
             "type": "text",
             "default": "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
           },
           "keep_highest": {
-            "description": "保留最高",
+            "description": "保留最高骰 (变量: dice_count, dice_faces, keep_highest, subtotal, kept, dropped)",
             "type": "text",
             "default": "{dice_count}d{dice_faces}k{keep_highest}={subtotal} [{kept} | {dropped}]"
           },
           "normal_dice": {
-            "description": "普通掷骰结果",
+            "description": "普通掷骰格式 (变量: dice_count, dice_faces, subtotal, rolls)",
             "type": "text",
             "default": "{dice_count}d{dice_faces}={subtotal} [{rolls}]"
           },
           "dice_with_modifier": {
-            "description": "带修正值的掷骰",
+            "description": "带修正值掷骰 (变量: dice_count, dice_faces, modifier, subtotal, rolls, total)",
             "type": "text",
             "default": "{dice_count}d{dice_faces}{modifier}={subtotal} [{rolls}] {modifier} = {total}"
           }
@@ -499,29 +443,29 @@
             "type": "object",
             "items": {
               "loss": {
-                "description": "理智检定失败",
+                "description": "理智损失 (变量: name, roll_result, san_value, result_msg, loss, new_san)",
                 "type": "text",
                 "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san}"
               },
               "no_loss": {
-                "description": "理智检定无损失",
+                "description": "无损失 (变量: name, roll_result, san_value, result_msg)",
                 "type": "text",
                 "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → 无损失"
               },
               "great_loss": {
-                "description": "理智检定重大损失",
+                "description": "重大损失 (变量: name, roll_result, san_value, result_msg, loss, new_san)",
                 "type": "text",
                 "default": "{name} 理智检定: {roll_result}/{san_value} {result_msg} → -{loss}, 当前 {new_san} (重大损失)"
               },
               "zero": {
-                "description": "理智归零",
+                "description": "理智归零 (变量: name)",
                 "type": "text",
                 "default": "{name} 理智归零"
               }
             }
           },
           "check": {
-            "description": "理智检定",
+            "description": "检定成功/失败",
             "type": "object",
             "items": {
               "success": {
@@ -537,17 +481,17 @@
             }
           },
           "temporary_insanity": {
-            "description": "临时疯狂",
+            "description": "临时疯狂 (变量: result)",
             "type": "text",
             "default": "临时疯狂: {result}"
           },
           "long_term_insanity": {
-            "description": "长期疯狂",
+            "description": "长期疯狂 (变量: result)",
             "type": "text",
             "default": "长期疯狂: {result}"
           },
           "temporary_insanity_types": {
-            "description": "临时疯狂类型",
+            "description": "临时疯狂症状列表 (使用 1D10 作为掷骰占位符)",
             "type": "list",
             "items": {
               "type": "string"
@@ -566,7 +510,7 @@
             ]
           },
           "long_term_insanity_types": {
-            "description": "长期疯狂类型",
+            "description": "长期疯狂症状列表 (使用 1D10 作为掷骰占位符)",
             "type": "list",
             "items": {
               "type": "string"
@@ -590,104 +534,58 @@
         "description": "先攻相关输出",
         "type": "object",
         "items": {
-          "add": {
-            "description": "添加先攻",
-            "type": "text",
-            "default": "{name} 的先攻 = {value}"
-          },
-          "remove_name": {
-            "description": "移除先攻",
-            "type": "text",
-            "default": "已移除 {name} 的先攻"
-          },
-          "clear": {
-            "description": "清空先攻",
-            "type": "text",
-            "default": "先攻列表已清空"
-          },
           "empty": {
             "description": "先攻列表为空",
             "type": "text",
             "default": "先攻列表为空"
           },
-          "list": {
-            "description": "先攻列表",
+          "cleared": {
+            "description": "清空先攻",
             "type": "text",
-            "default": "先攻列表:\\n{content}"
+            "default": "已清空先攻列表"
           },
-          "next_turn": {
-            "description": "下一轮",
-            "type": "text",
-            "default": "轮到 {name} (先攻 {value})"
-          },
-          "current_marker": {
-            "description": "当前标记",
-            "type": "text",
-            "default": "←当前"
-          },
-          "empty_no_advance": {
-            "description": "无法推进",
-            "type": "text",
-            "default": "先攻列表为空，无法推进回合"
-          },
-          "turn_end": {
-            "description": "回合结束",
-            "type": "text",
-            "default": "{current_name}的回合结束 → \\n {next_name}的回合 (先攻: {next_init})"
-          },
-          "delete_player": {
-            "description": "删除玩家",
+          "deleted": {
+            "description": "删除先攻 (变量: player_name)",
             "type": "text",
             "default": "已删除角色{player_name}的先攻"
           },
-          "add_update_player": {
-            "description": "添加/更新玩家",
+          "added": {
+            "description": "添加/更新先攻 (变量: player_name, init_value)",
             "type": "text",
             "default": "已添加/更新{player_name}的先攻：{init_value}"
           },
           "current_list": {
-            "description": "当前先攻列表",
+            "description": "当前先攻列表 (变量: content)",
             "type": "text",
-            "default": "当前先攻列表为：\\n{content}"
+            "default": "当前先攻列表为：\n{content}"
+          },
+          "turn_end": {
+            "description": "回合结束 (变量: current_name, next_name, next_init)",
+            "type": "text",
+            "default": "{current_name}的回合结束 → \n {next_name}的回合 (先攻: {next_init})"
+          },
+          "empty_no_advance": {
+            "description": "无法推进回合",
+            "type": "text",
+            "default": "先攻列表为空，无法推进回合"
           }
         }
       },
       "character_list": {
-        "description": "角色生成模板",
+        "description": "角色列表模板",
         "type": "object",
         "items": {
           "coc": {
-            "description": "COC角色列表",
+            "description": "COC角色列表 (变量: characters)",
             "type": "text",
             "default": "{characters}"
           },
           "dnd": {
-            "description": "DND角色列表",
+            "description": "DND角色列表 (变量: characters)",
             "type": "text",
             "default": "{characters}"
           }
         }
-      },
-      "character_sheet": {
-        "description": "角色卡",
-        "type": "object",
-        "items": {
-          "coc": {
-            "description": "COC角色卡",
-            "type": "text",
-            "default": "第 {index} 号调查员\n力量: {STR}  体质: {CON}  体型: {SIZ}\n敏捷: {DEX}  外貌: {APP}  智力: {INT}\n意志: {POW}  教育: {EDU}\n生命: {HP}  魔力: {MP}  理智: {SAN}  幸运: {LUCK}\nDB: {DB}  总和 : {TOTAL} / {TOTAL + LUCK}"
-          },
-          "dnd": {
-            "description": "DND角色卡",
-            "type": "text",
-            "default": "第 {index} 位冒险者\n[{data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]}] → 共计 {sum_data}"
-          }
-        }
-      },
-      "generated_names": {
-        "description": "名字生成",
-        "type": "text",
-        "default": "生成 {num} 个名字: {names}"
       },
       "log": {
         "description": "日志相关输出",
@@ -704,32 +602,32 @@
             "default": "消息已记录到当前日志。"
           },
           "unfinished_session": {
-            "description": "未完成会话",
+            "description": "未完成会话 (变量: session_name)",
             "type": "text",
             "default": "检测到未完成的日志『{session_name}』，是否继续？"
           },
           "new_session": {
-            "description": "新会话",
+            "description": "新会话 (变量: session_name)",
             "type": "text",
             "default": "新日志『{session_name}』已创建。"
           },
           "session_not_found": {
-            "description": "会话未找到",
+            "description": "会话未找到 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』不存在。"
           },
           "session_finished": {
-            "description": "会话结束",
+            "description": "会话已结束 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』已结束并归档。"
           },
           "session_active": {
-            "description": "会话活跃",
+            "description": "会话活跃 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』仍在进行中。"
           },
           "session_resumed": {
-            "description": "会话恢复",
+            "description": "会话恢复 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』已恢复。"
           },
@@ -739,7 +637,7 @@
             "default": "没有已暂停的日志。"
           },
           "session_paused": {
-            "description": "会话暂停",
+            "description": "会话暂停 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』已暂停。"
           },
@@ -749,12 +647,12 @@
             "default": "没有未完成的日志。"
           },
           "session_halted": {
-            "description": "会话中止",
+            "description": "会话中止 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』已中止。"
           },
           "session_line": {
-            "description": "会话行",
+            "description": "会话列表行 (变量: session_name, start_time, status, message_count)",
             "type": "text",
             "default": "▸ {session_name} · {start_time} · {status} · {message_count} 条记录"
           },
@@ -764,22 +662,22 @@
             "default": "尚无任何日志记录。"
           },
           "session_deleted": {
-            "description": "会话删除",
+            "description": "会话删除 (变量: session_name)",
             "type": "text",
             "default": "日志『{session_name}』已删除。"
           },
           "session_exported": {
-            "description": "会话导出",
+            "description": "会话导出 (变量: session_name, file_name)",
             "type": "text",
             "default": "日志『{session_name}』已导出，文件名：{file_name}"
           },
           "export_failed": {
-            "description": "导出失败",
+            "description": "导出失败 (变量: error)",
             "type": "text",
             "default": "日志导出失败：{error}"
           },
           "send_file_failed": {
-            "description": "发送文件失败",
+            "description": "发送文件失败 (变量: error)",
             "type": "text",
             "default": "发送日志文件失败：{error}"
           },
@@ -800,104 +698,51 @@
       "default_faces": {
         "description": "默认骰子面数",
         "type": "int",
-        "hint": "用于隐藏掷骰等场景的默认骰子面数",
+        "hint": "不指定骰子时的默认面数 (如 .r 等于 .r 1d100)",
         "default": 100,
-        "slider": {
-          "min": 1,
-          "max": 100,
-          "step": 1
-        }
+        "slider": { "min": 1, "max": 100, "step": 1 }
       },
       "max_count": {
         "description": "骰子最大个数",
         "type": "int",
         "hint": "一次掷骰最多可投掷的骰子个数",
         "default": 100,
-        "slider": {
-          "min": 1,
-          "max": 1000,
-          "step": 10
-        }
+        "slider": { "min": 1, "max": 1000, "step": 10 }
       },
       "max_faces": {
         "description": "骰子最大面数",
         "type": "int",
         "hint": "骰子最多可以有多少面",
         "default": 1000,
-        "slider": {
-          "min": 10,
-          "max": 10000,
-          "step": 100
-        }
+        "slider": { "min": 10, "max": 10000, "step": 100 }
       },
       "vampire_default_difficulty": {
         "description": "吸血鬼骰默认难度",
         "type": "int",
-        "hint": "吸血鬼掷骰的默认难度值",
         "default": 6,
-        "slider": {
-          "min": 1,
-          "max": 10,
-          "step": 1
-        }
-      },
-      "limits": {
-        "description": "骰子限制配置",
-        "type": "object",
-        "items": {
-          "max_count": {
-            "description": "骰子最大个数",
-            "type": "int",
-            "default": 100
-          },
-          "max_faces": {
-            "description": "骰子最大面数",
-            "type": "int",
-            "default": 1000
-          }
-        }
+        "slider": { "min": 1, "max": 10, "step": 1 }
       },
       "bonus_penalty": {
         "description": "奖励/惩罚骰配置",
         "type": "object",
         "items": {
-          "dice_count": {
-            "description": "奖励/惩罚骰个数",
-            "type": "int",
-            "default": 1
-          },
-          "base_faces": {
-            "description": "奖励/惩罚骰基础面数",
-            "type": "int",
-            "default": 100
-          }
+          "dice_count": { "description": "骰子个数", "type": "int", "default": 1 },
+          "base_faces": { "description": "基础面数", "type": "int", "default": 100 }
         }
       },
       "fireball": {
         "description": "火球术配置",
         "type": "object",
         "items": {
-          "base_dice": {
-            "description": "火球术基础骰子数",
-            "type": "int",
-            "default": 8
-          },
-          "dice_per_ring": {
-            "description": "每环增加的骰子数",
-            "type": "int",
-            "default": 1
-          }
+          "base_dice": { "description": "基础骰子数 (3环)", "type": "int", "default": 8 },
+          "dice_per_ring": { "description": "每升一环增加骰子数", "type": "int", "default": 1 }
         }
       },
       "rp": {
         "description": "运势配置",
         "type": "object",
         "items": {
-          "max_value": {
-            "description": "运势最大值",
-            "type": "int",
-            "default": 100
-          }
+          "max_value": { "description": "运势最大值", "type": "int", "default": 100 }
         }
       }
     }
@@ -905,32 +750,14 @@
   "initiative": {
     "description": "先攻配置",
     "type": "object",
-    "hint": "先攻系统的配置",
+    "hint": "先攻掷骰的范围配置",
     "items": {
-      "min": {
-        "description": "先攻最小值",
-        "type": "int",
-        "default": 1
-      },
-      "max": {
-        "description": "先攻最大值",
-        "type": "int",
-        "default": 20
-      },
       "dice_range": {
         "description": "先攻掷骰范围",
         "type": "object",
         "items": {
-          "min": {
-            "description": "先攻掷骰最小值",
-            "type": "int",
-            "default": 1
-          },
-          "max": {
-            "description": "先攻掷骰最大值",
-            "type": "int",
-            "default": 20
-          }
+          "min": { "description": "最小值", "type": "int", "default": 1 },
+          "max": { "description": "最大值", "type": "int", "default": 20 }
         }
       }
     }
@@ -940,73 +767,29 @@
     "type": "object",
     "hint": "SAN检定和疯狂相关配置",
     "items": {
-      "san_check_min": {
-        "description": "SAN检定最小值",
-        "type": "int",
-        "default": 1
-      },
-      "san_check_max": {
-        "description": "SAN检定最大值",
-        "type": "int",
-        "default": 100
-      },
-      "insanity_dice": {
-        "description": "疯狂症状骰子",
-        "type": "string",
-        "hint": "疯狂症状骰子表达式",
-        "default": "1D10"
-      },
       "dice_range": {
         "description": "理智检定掷骰范围",
         "type": "object",
         "items": {
-          "min": {
-            "description": "理智检定掷骰最小值",
-            "type": "int",
-            "default": 1
-          },
-          "max": {
-            "description": "理智检定掷骰最大值",
-            "type": "int",
-            "default": 100
-          }
+          "min": { "description": "最小值", "type": "int", "default": 1 },
+          "max": { "description": "最大值", "type": "int", "default": 100 }
         }
       },
-      "insanity_dice_config": {
+      "insanity_dice": {
         "description": "疯狂症状骰子配置",
         "type": "object",
         "items": {
-          "dice": {
-            "description": "疯狂症状骰子表达式",
-            "type": "string",
-            "default": "1D10"
-          },
-          "min": {
-            "description": "疯狂症状骰子最小值",
-            "type": "int",
-            "default": 1
-          },
-          "max": {
-            "description": "疯狂症状骰子最大值",
-            "type": "int",
-            "default": 10
-          }
+          "dice": { "description": "骰子表达式 (用于文本替换)", "type": "string", "default": "1D10" },
+          "min": { "description": "骰子最小值", "type": "int", "default": 1 },
+          "max": { "description": "骰子最大值", "type": "int", "default": 10 }
         }
       },
       "phobia_mania_range": {
-        "description": "恐惧/狂躁症状范围",
+        "description": "恐惧/躁狂症状范围",
         "type": "object",
         "items": {
-          "min": {
-            "description": "恐惧/狂躁症状最小值",
-            "type": "int",
-            "default": 1
-          },
-          "max": {
-            "description": "恐惧/狂躁症状最大值",
-            "type": "int",
-            "default": 100
-          }
+          "min": { "description": "最小值", "type": "int", "default": 1 },
+          "max": { "description": "最大值", "type": "int", "default": 100 }
         }
       }
     }
@@ -1014,236 +797,108 @@
   "character": {
     "description": "角色生成配置",
     "type": "object",
-    "hint": "COC和DND角色生成的配置",
+    "hint": "COC和DND角色生成的骰子配置",
     "items": {
-      "coc_three_d6_multiplier": {
-        "description": "3d6 * 倍数",
-        "type": "int",
-        "hint": "COC角色生成中3d6的倍数",
-        "default": 5
-      },
-      "coc_two_d6_bonus": {
-        "description": "2d6+6中的加值",
-        "type": "int",
-        "default": 6
-      },
-      "coc_two_d6_multiplier": {
-        "description": "2d6+6的倍数",
-        "type": "int",
-        "default": 5
-      },
-      "hp_formula": {
-        "description": "HP计算公式",
-        "type": "text",
-        "hint": "使用 SIZ, CON 等变量",
-        "default": "(SIZ + CON) // 10"
-      },
-      "mp_formula": {
-        "description": "MP计算公式",
-        "type": "text",
-        "hint": "使用 POW 等变量",
-        "default": "POW // 5"
-      },
-      "san_formula": {
-        "description": "SAN计算公式",
-        "type": "text",
-        "hint": "使用 POW 等变量",
-        "default": "POW"
-      },
-      "dnd_drop_lowest": {
-        "description": "DND 4d6去最低个数",
-        "type": "int",
-        "default": 1
-      },
       "coc": {
-        "description": "COC角色生成配置",
+        "description": "COC角色生成",
         "type": "object",
         "items": {
           "dice": {
-            "description": "COC骰子配置",
+            "description": "COC骰子公式",
             "type": "object",
             "items": {
               "three_d6": {
-                "description": "3d6配置",
+                "description": "3d6属性 (力量/体质/敏捷/外貌/意志)",
                 "type": "object",
                 "items": {
-                  "dice_count": {
-                    "description": "骰子个数",
-                    "type": "int",
-                    "default": 3
-                  },
-                  "dice_faces": {
-                    "description": "骰子面数",
-                    "type": "int",
-                    "default": 6
-                  },
-                  "multiplier": {
-                    "description": "倍数",
-                    "type": "int",
-                    "default": 5
-                  }
+                  "dice_count": { "description": "骰子个数", "type": "int", "default": 3 },
+                  "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
+                  "multiplier": { "description": "倍数", "type": "int", "default": 5 }
                 }
               },
               "two_d6_plus_6": {
-                "description": "2d6+6配置",
+                "description": "2d6+6属性 (体型/智力/教育)",
                 "type": "object",
                 "items": {
-                  "dice_count": {
-                    "description": "骰子个数",
-                    "type": "int",
-                    "default": 2
-                  },
-                  "dice_faces": {
-                    "description": "骰子面数",
-                    "type": "int",
-                    "default": 6
-                  },
-                  "bonus": {
-                    "description": "加值",
-                    "type": "int",
-                    "default": 6
-                  },
-                  "multiplier": {
-                    "description": "倍数",
-                    "type": "int",
-                    "default": 5
-                  }
+                  "dice_count": { "description": "骰子个数", "type": "int", "default": 2 },
+                  "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
+                  "bonus": { "description": "加值", "type": "int", "default": 6 },
+                  "multiplier": { "description": "倍数", "type": "int", "default": 5 }
                 }
               }
             }
           },
           "luck_dice": {
-            "description": "幸运骰配置",
+            "description": "幸运骰",
             "type": "object",
             "items": {
-              "dice_count": {
-                "description": "骰子个数",
-                "type": "int",
-                "default": 3
-              },
-              "dice_faces": {
-                "description": "骰子面数",
-                "type": "int",
-                "default": 6
-              },
-              "multiplier": {
-                "description": "倍数",
-                "type": "int",
-                "default": 5
-              }
+              "dice_count": { "description": "骰子个数", "type": "int", "default": 3 },
+              "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
+              "multiplier": { "description": "倍数", "type": "int", "default": 5 }
             }
           }
         }
       },
       "dnd": {
-        "description": "DND角色生成配置",
+        "description": "DND角色生成",
         "type": "object",
         "items": {
           "dice": {
-            "description": "DND骰子配置",
+            "description": "DND骰子公式 (默认 4d6去最低)",
             "type": "object",
             "items": {
-              "dice_count": {
-                "description": "骰子个数",
-                "type": "int",
-                "default": 4
-              },
-              "dice_faces": {
-                "description": "骰子面数",
-                "type": "int",
-                "default": 6
-              },
-              "drop_lowest": {
-                "description": "去最低个数",
-                "type": "int",
-                "default": 1
-              }
+              "dice_count": { "description": "骰子个数", "type": "int", "default": 4 },
+              "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
+              "drop_lowest": { "description": "去最低个数", "type": "int", "default": 1 }
             }
           },
-          "attributes_count": {
-            "description": "属性个数",
-            "type": "int",
-            "default": 6
-          }
+          "attributes_count": { "description": "属性个数", "type": "int", "default": 6 }
         }
       }
     }
   },
   "coc_rules": {
-    "description": "COC规则配置",
+    "description": "COC大成功/大失败规则",
     "type": "object",
-    "hint": "大成功/大失败规则配置",
+    "hint": "规则1=严格, 规则2=COC7版(推荐), 规则3=阶段性, 规则4=宽松",
     "items": {
       "default_rule": {
-        "description": "默认规则",
+        "description": "默认规则编号",
         "type": "int",
-        "hint": "选择默认的成功/失败规则 (1-4)",
+        "hint": "1=严格, 2=COC7版(推荐), 3=阶段性, 4=宽松",
         "default": 2,
-        "slider": {
-          "min": 1,
-          "max": 4,
-          "step": 1
-        }
+        "slider": { "min": 1, "max": 4, "step": 1 }
       },
       "rule_strings": {
-        "description": "规则字符串列表",
+        "description": "规则名称列表 (索引0留空)",
         "type": "list",
-        "items": {
-          "type": "string"
-        },
+        "items": { "type": "string" },
         "default": ["", "严格规则", "COC7版规则", "阶段性规则", "宽松规则"]
       }
     }
   },
-  "names": {
-    "description": "名字生成配置",
-    "type": "object",
-    "hint": "随机名字生成的配置",
-    "items": {
-      "default_language": {
-        "description": "默认语言",
-        "type": "string",
-        "hint": "生成名字的默认语言",
-        "default": "cn",
-        "options": ["cn", "en", "us", "jp"]
-      },
-      "languages": {
-        "description": "语言配置",
-        "type": "object",
-        "items": {},
-        "default": {}
-      }
-    }
-  },
   "growth": {
-    "description": "成长系统配置",
+    "description": "技能成长配置",
     "type": "object",
-    "hint": "技能成长检定的配置",
+    "hint": "技能成长检定的阈值配置",
     "items": {
       "success_threshold": {
-        "description": "成长成功阈值",
+        "description": "成长成功阈值 (掷骰超过此值或技能值即成长)",
         "type": "int",
-        "hint": "达到此阈值才能成长",
         "default": 95,
-        "slider": {
-          "min": 1,
-          "max": 100,
-          "step": 1
-        }
+        "slider": { "min": 1, "max": 100, "step": 1 }
       }
     }
   },
   "db_build": {
-    "description": "数据库构建配置",
+    "description": "DB/Build计算表",
     "type": "object",
-    "hint": "数据库构建相关配置",
+    "hint": "根据力量+体型计算伤害加值和体格",
     "items": {
       "table": {
-        "description": "数据库表配置",
+        "description": "DB/Build阈值表 (threshold: 力量+体型上限, db: 伤害加值, build: 体格)",
         "type": "list",
-        "items": {
-          "type": "object"
-        },
+        "items": { "type": "object" },
         "default": []
       }
     }

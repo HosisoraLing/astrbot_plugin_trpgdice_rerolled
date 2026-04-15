@@ -39,8 +39,6 @@ GREAT_SF_RULE_STR = _get_great_sf_rule_str()
 #  -- 4: loose rule.                                                        #
 #        1~min(5, skill level) => great success, 96~100 => great failure    #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-GLOBAL_SET = True
-
 def coc_rule_init():
     '''
     Create table of cocrule.db
@@ -54,26 +52,6 @@ def coc_rule_init():
     csr.execute('CREATE TABLE IF NOT EXISTS GroupRule(GroupID VARCHAR(15) PRIMARY KEY, Rule INTEGER);')
     ruledb.commit()
     ruledb.close()
-
-def fetch_group_rule(group:str)->int:
-    '''
-    Ask rule # in given group.
-    Args:
-        group(str): QQ group id.
-    Returns:
-        int: rule id, -1 for group not exist.
-    '''
-    # db connection
-    ruledb = sqlite3.connect(f"{PLUGIN_DIR}/../data/cocrule.db")
-    csr = ruledb.cursor()
-    
-    # search for existence
-    try: csr.execute(f"SELECT Rule FROM GroupRule WHERE GroupID = \"{group}\"")
-    except:
-        ruledb.close()
-        return -1   # Selecting Failed
-    res = csr.fetchone()
-    return int(res)    # Exec Succeed
 
 def great_success_range(skill_level:int, rule:int)->list:
     '''
@@ -141,17 +119,15 @@ def set_great_sf_rule(rule:int, group:str)->int:
         rule = GREAT_SF_RULE_DEFAULT
     
     # search for existence
-    csr.execute(f"SELECT * FROM GroupRule WHERE GroupID = \"{group}\"")
-    
+    csr.execute("SELECT * FROM GroupRule WHERE GroupID = ?", (group,))
+
     res = csr.fetchone()
-    if res == None:
+    if res is None:
         # create new record
-        csr.execute(f"INSERT INTO GroupRule VALUES (\"{group}\", {rule});")
-        
+        csr.execute("INSERT INTO GroupRule VALUES (?, ?)", (group, rule))
     else:
         # modify rule
-        csr.execute(f"UPDATE GroupRule SET Rule = {rule} WHERE GroupID = \"{group}\";")
-        
+        csr.execute("UPDATE GroupRule SET Rule = ? WHERE GroupID = ?", (rule, group))
     ruledb.commit()
     ruledb.close()
     return 1    # Exec Succeed
@@ -169,13 +145,17 @@ def get_great_sf_rule(group:str)->int:
     csr = ruledb.cursor()
     
     # search for existence
-    try: csr.execute(f"SELECT Rule FROM GroupRule WHERE GroupID = \"{group}\"")
-    except:
+    try:
+        csr.execute("SELECT Rule FROM GroupRule WHERE GroupID = ?", (group,))
+    except Exception:
         ruledb.close()
         return -1   # Selecting Failed
-    
-    res = csr.fetchone()[0]
-    return int(res)    # Exec Succeed
+
+    row = csr.fetchone()
+    ruledb.close()
+    if row is None:
+        return GREAT_SF_RULE_DEFAULT
+    return int(row[0])
 
 
 def modify_coc_great_sf_rule_command(group_id, command: str = " "):

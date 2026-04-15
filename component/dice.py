@@ -143,9 +143,18 @@ def parse_dice_expression(expression):
 
                     if modifier:
                         try:
-                            subtotal = eval(f"{subtotal_before_mod}{modifier}")
+                            op = modifier[0]
+                            val = int(modifier[1:])
+                            if op == '+':
+                                subtotal = subtotal_before_mod + val
+                            elif op == '-':
+                                subtotal = subtotal_before_mod - val
+                            elif op == '*':
+                                subtotal = subtotal_before_mod * val
+                            else:
+                                return None, get_output("dice.modifier_error", modifier=modifier)
                             roll_result = get_output("dice.dice_with_modifier", dice_count=dice_count, dice_faces=dice_faces, modifier=modifier, subtotal=subtotal_before_mod, rolls=' + '.join(map(str, rolls)), total=subtotal)
-                        except:
+                        except (ValueError, ArithmeticError):
                             return None, get_output("dice.modifier_error", modifier=modifier)
                     else:
                         subtotal = subtotal_before_mod

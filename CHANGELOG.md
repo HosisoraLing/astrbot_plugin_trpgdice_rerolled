@@ -6,6 +6,42 @@
 
 ---
 
+## [1.1.1] - 2026-04-15
+
+### Security
+
+- Fix SQL injection in `component/rules.py` - all 5 f-string queries replaced with parameterized queries
+- Remove unsafe code execution in `component/dice.py` - dice modifier calculation now uses safe arithmetic
+
+### Bug Fixes
+
+- Fix keep-highest dice (k) not working - `.r 10d6k5` now correctly keeps top 5 dice (previously `k` was treated as a remark)
+- Fix `pc.change` error message not showing - template key typo (`pc.change,missing` to `pc.change.missing`)
+- Fix help text escape error - `\m` to `\n`, fix multiple missing newlines
+- Fix `end_current_round` crash - add initiative list existence check to prevent `KeyError`
+- Fix `get_great_sf_rule` crash - new groups no longer crash on first skill check when `fetchone()` returns `None`
+- Fix `status` command error paths - error messages now correctly sent via `event.plain_result()`
+- Fix `.log get` crash - `export_session` call had mismatched argument count
+- Fix log export `isDice` field - exported JSON now correctly marks dice messages
+- Fix log export timezone - removed hardcoded UTC+8 offset, uses system local timezone
+
+### Removed
+
+- Completely remove `faker` dependency - removed `generate_names()`, `.name` command, and all related config
+- Remove unused `component/initiative.py` - main.py has its own complete initiative implementation
+- Remove dead code - unused imports, deprecated `fetch_group_rule()`, commented-out old log block, unused `log_help_str` and `GLOBAL_SET`
+
+### Improved
+
+- Initiative messages now customizable via `get_output()` config
+- Streamlined `_conf_schema.json` - removed duplicate config entries, added variable placeholder docs in descriptions
+- Improved `component/sanity.py` encapsulation - uses new `get_output_list()` instead of private `_config`
+- `@register` metadata aligned with `metadata.yaml`
+- Updated README.md with keep-highest dice, initiative system, and config documentation
+- Bare `except` clauses replaced with specific exception types
+
+---
+
 ## [1.1.0] - 2026-02-02
 
 ### 🎯 主要变更（BREAKING CHANGE）

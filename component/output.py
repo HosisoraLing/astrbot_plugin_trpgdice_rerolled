@@ -136,6 +136,60 @@ def get_output(key: str, **kwargs):
     except Exception:
         return template
 
+def get_output_list(key: str, default=None):
+    """
+    从输出配置中获取列表类型的值，支持多层 key，通过点分隔。
+    与 get_output 不同，此函数返回列表而不是格式化字符串。
+    """
+    if _config is None:
+        return default if default is not None else []
+
+    keys = key.split(".")
+
+    # 首先尝试从配置中获取用户自定义值
+    template = _config.get("output", {})
+    for k in keys:
+        if isinstance(template, dict):
+            if "items" in template:
+                template = template["items"]
+            if k in template:
+                template = template[k]
+            else:
+                template = None
+                break
+        else:
+            template = None
+            break
+
+    # 如果配置中没有找到，从 schema 中获取默认值
+    if template is None:
+        schema = _load_schema()
+        if schema:
+            schema_template = schema.get("output", {})
+            for k in keys:
+                if isinstance(schema_template, dict):
+                    if "items" in schema_template:
+                        schema_template = schema_template["items"]
+                    if k in schema_template:
+                        schema_template = schema_template[k]
+                    else:
+                        return default if default is not None else []
+                else:
+                    return default if default is not None else []
+
+            if isinstance(schema_template, dict) and "default" in schema_template:
+                template = schema_template["default"]
+            else:
+                template = schema_template
+
+    if isinstance(template, dict) and "default" in template:
+        template = template["default"]
+
+    if isinstance(template, list):
+        return template
+    return default if default is not None else []
+
+
 def get_config(key: str, default=None):
     """
     从配置对象中获取配置值，支持多层 key，通过点分隔。
