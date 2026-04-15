@@ -7,6 +7,69 @@ _config: AstrBotConfig = None
 _schema = None  # 缓存的 Schema
 _config_initialized = False
 
+# 插件本地覆盖存储（LLM 工具函数或用户可写入）
+# 文件路径：data/plugin_overrides.json（相对于插件根目录）
+_OVERRIDES_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "plugin_overrides.json")
+_overrides: dict = {}  # {"output": {"key.path": "template"}, "config": {"key.path": value}}
+_overrides_loaded = False
+
+
+def _load_overrides() -> dict:
+    """加载本地覆盖文件，若不存在则返回空字典。"""
+    global _overrides, _overrides_loaded
+    if _overrides_loaded:
+        return _overrides
+    _overrides_loaded = True
+    try:
+        if os.path.exists(_OVERRIDES_PATH):
+            with open(_OVERRIDES_PATH, "r", encoding="utf-8") as f:
+                _overrides = json.load(f)
+    except Exception:
+        _overrides = {}
+    _overrides.setdefault("output", {})
+    _overrides.setdefault("config", {})
+    return _overrides
+
+
+def _save_overrides():
+    """将覆盖数据持久化到文件。"""
+    try:
+        os.makedirs(os.path.dirname(_OVERRIDES_PATH), exist_ok=True)
+        with open(_OVERRIDES_PATH, "w", encoding="utf-8") as f:
+            json.dump(_overrides, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"警告: 无法保存覆盖配置: {e}")
+
+
+def set_output_override(key: str, value: str):
+    """
+    设置输出模板的覆盖值，优先级高于 AstrBot 配置和 Schema 默认值。
+    可由 LLM 工具函数调用，持久化保存。
+    返回 (success: bool, message: str)
+    """
+    _load_overrides()
+    _overrides["output"][key] = value
+    _save_overrides()
+    return True, f"输出模板 [{key}] 已更新。"
+
+
+def set_config_override(key: str, value) -> tuple:
+    """
+    设置配置项的覆盖值，优先级高于 AstrBot 配置。
+    可由 LLM 工具函数调用，持久化保存。
+    返回 (success: bool, message: str)
+    """
+    _load_overrides()
+    _overrides["config"][key] = value
+    _save_overrides()
+    return True, f"配置项 [{key}] 已更新为 {value}。"
+
+
+def get_override_list() -> dict:
+    """返回当前所有覆盖项，供 LLM 工具函数查阅。"""
+    _load_overrides()
+    return dict(_overrides)
+
 def _load_schema():
     """
     加载配置 Schema 文件以进行验证。
@@ -79,9 +142,18 @@ def get_output(key: str, **kwargs):
     if _config is None:
         raise RuntimeError("配置未初始化，请确保在插件初始化时调用 set_config()")
 
+    # 优先查插件本地覆盖（LLM工具函数或用户写入）
+    overrides = _load_overrides()
+    if key in overrides.get("output", {}):
+        template = overrides["output"][key]
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return template
+
     keys = key.split(".")
 
-    # 首先尝试从配置中获取用户自定义值
+    # 其次尝试从 AstrBot 配置中获取用户自定义值
     template = _config.get("output", {})
     for k in keys:
         if isinstance(template, dict):
@@ -209,6 +281,11 @@ def get_config(key: str, default=None):
     """
     if _config is None:
         return default
+
+    # 优先查插件本地覆盖
+    overrides = _load_overrides()
+    if key in overrides.get("config", {}):
+        return overrides["config"][key]
 
     keys = key.split(".")
     config = _config

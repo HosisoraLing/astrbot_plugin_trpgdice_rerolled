@@ -137,7 +137,13 @@ def parse_dice_expression(expression):
                     if keep_highest < dice_count:
                         kept = " ".join(map(str, sorted_rolls[:keep_highest]))
                         dropped = " ".join(map(str, sorted_rolls[keep_highest:]))
-                        roll_result = get_output("dice.keep_highest", dice_count=dice_count, dice_faces=dice_faces, keep_highest=keep_highest, subtotal=subtotal_before_mod, kept=kept, dropped=dropped)
+                        all_rolls = " ".join(map(str, sorted_rolls))
+                        roll_result = get_output(
+                            "dice.keep_highest",
+                            dice_count=dice_count, dice_faces=dice_faces,
+                            keep_highest=keep_highest, subtotal=subtotal_before_mod,
+                            kept=kept, dropped=dropped, rolls=all_rolls
+                        )
                     else:
                         roll_result = get_output("dice.normal_dice", dice_count=dice_count, dice_faces=dice_faces, subtotal=subtotal_before_mod, rolls=' + '.join(map(str, rolls)))
 
@@ -286,11 +292,9 @@ def handle_roll_dice(expression: str, user_id: str = None, name : str = None, re
     total, result_message = parse_dice_expression(expression)
     if total is None:
         return get_output("dice.normal.error", error=result_message)
-    else:
-        if remark is None :
-            return get_output("dice.normal.success", result=result_message, total=total, name = name)
-        else :
-            return get_output("dice.normal.success_remark", result=result_message, total=total, name = name, remark = remark)
+    if remark:
+        return get_output("dice.normal.success_remark", result=result_message, total=total, name=name, remark=remark)
+    return get_output("dice.normal.success", result=result_message, total=total, name=name)
 
 def roll_dice_vampire(dice_count: int, difficulty: int):
     """

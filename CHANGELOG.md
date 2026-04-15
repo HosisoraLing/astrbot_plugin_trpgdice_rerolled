@@ -6,6 +6,41 @@
 
 ---
 
+## [1.2.0] - 2026-04-15
+
+### ✨ 新增功能
+
+#### LLM 美化模式
+
+- 新增 `llm_mode` 配置节（启用开关、模型 ID、系统提示词）
+- 所有掷骰相关指令（`.r` `.rv` `.rh` `.ra` `.rap` `.rab` `.sc` `.ti` `.li` `.en` `.coc` `.dnd` `.fireball` `.jrrp` `.ri`）均支持 LLM 美化输出
+- 关闭时与原有模板输出完全一致，LLM provider 不可用时自动降级，不影响正常使用
+
+#### LLM 工具函数（Function Calling）
+
+- `roll_dice` - 掷骰子，支持所有骰子表达式
+- `skill_check` - COC 技能检定
+- `san_check` - 理智检定（自动更新人物卡）
+- `roll_coc_character` - 生成 COC 调查员属性
+- `roll_dnd_character` - 生成 D&D 冒险者属性
+- `fireball_damage` - 计算火球术伤害
+- `daily_luck` - 查询今日运势
+- `set_output_template` - 让 LLM 帮助修改输出模板（持久化保存）
+- `set_llm_mode` - 让 LLM 开关美化模式并设置提示词
+
+#### 插件本地覆盖层
+
+- 新增 `data/plugin_overrides.json` 持久化存储，优先级高于 AstrBot 配置面板
+- LLM 工具函数写入的输出模板、配置变更均保存于此，重启后保留
+
+### 🐛 Bug 修复
+
+- **修复保留最高骰输出格式** - `.r 10d6k5` 输出格式改为 `10d6k5=[保留 | 丢弃] = 总计`，不再重复显示总值
+- **修复空 remark 触发 remark 模板** - `remark=""` 时改用普通模板，避免出现空的 `【】` 括号
+- **修复 keep_highest 模板变量缺失** - 补传 `rolls` 变量，防止用户旧配置的格式字符串失败后原样输出
+
+---
+
 ## [1.1.1] - 2026-04-15
 
 ### 🔒 安全修复

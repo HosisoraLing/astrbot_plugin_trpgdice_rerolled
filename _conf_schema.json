@@ -418,9 +418,9 @@
             "default": "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
           },
           "keep_highest": {
-            "description": "保留最高骰 (变量: dice_count, dice_faces, keep_highest, subtotal, kept, dropped)",
+            "description": "保留最高骰 (变量: dice_count, dice_faces, keep_highest, subtotal, kept, dropped, rolls)",
             "type": "text",
-            "default": "{dice_count}d{dice_faces}k{keep_highest}={subtotal} [{kept} | {dropped}]"
+            "default": "{dice_count}d{dice_faces}k{keep_highest}=[{kept} | {dropped}]"
           },
           "normal_dice": {
             "description": "普通掷骰格式 (变量: dice_count, dice_faces, subtotal, rolls)",
@@ -900,6 +900,30 @@
         "type": "list",
         "items": { "type": "object" },
         "default": []
+      }
+    }
+  },
+  "llm_mode": {
+    "description": "LLM 模式配置",
+    "type": "object",
+    "hint": "启用后，所有掷骰结果将通过 LLM 进行美化输出；关闭时使用普通模板输出",
+    "items": {
+      "enabled": {
+        "description": "是否启用 LLM 美化模式",
+        "type": "bool",
+        "default": false
+      },
+      "model": {
+        "description": "使用的模型 ID（留空则使用当前对话默认模型）",
+        "type": "string",
+        "hint": "例如：gpt-4o、claude-3-5-sonnet，留空使用主对话模型",
+        "default": ""
+      },
+      "system_prompt": {
+        "description": "LLM 美化输出的系统提示词",
+        "type": "text",
+        "hint": "骰子原始结果文本会作为用户消息发送给 LLM，此处填写系统提示词",
+        "default": "你是一个跑团骰娘，风格活泼可爱。请用简短生动的语言（不超过60字）描述以下掷骰结果，可以加入一点点角色扮演风格，但必须保留所有数字和判定结论。"
       }
     }
   }
