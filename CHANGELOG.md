@@ -8,37 +8,37 @@
 
 ## [1.1.1] - 2026-04-15
 
-### Security
+### 🔒 安全修复
 
-- Fix SQL injection in `component/rules.py` - all 5 f-string queries replaced with parameterized queries
-- Remove unsafe code execution in `component/dice.py` - dice modifier calculation now uses safe arithmetic
+- **修复 SQL 注入漏洞** - `component/rules.py` 中 5 处 f-string SQL 全部改为参数化查询
+- **移除不安全的代码执行** - `component/dice.py` 中骰子修正值计算改为安全的算术运算
 
-### Bug Fixes
+### 🐛 Bug 修复
 
-- Fix keep-highest dice (k) not working - `.r 10d6k5` now correctly keeps top 5 dice (previously `k` was treated as a remark)
-- Fix `pc.change` error message not showing - template key typo (`pc.change,missing` to `pc.change.missing`)
-- Fix help text escape error - `\m` to `\n`, fix multiple missing newlines
-- Fix `end_current_round` crash - add initiative list existence check to prevent `KeyError`
-- Fix `get_great_sf_rule` crash - new groups no longer crash on first skill check when `fetchone()` returns `None`
-- Fix `status` command error paths - error messages now correctly sent via `event.plain_result()`
-- Fix `.log get` crash - `export_session` call had mismatched argument count
-- Fix log export `isDice` field - exported JSON now correctly marks dice messages
-- Fix log export timezone - removed hardcoded UTC+8 offset, uses system local timezone
+- **修复保留最高骰 (k) 不生效** - `.r 10d6k5` 现在正确保留最高的 5 个骰子（之前 `k` 被命令解析器错误当作备注）
+- **修复 `pc.change` 错误提示不显示** - 模板 key 中的逗号修正为点号（`pc.change,missing` → `pc.change.missing`）
+- **修复帮助文本转义错误** - `\m` 修正为 `\n`，补全多处缺失的换行符
+- **修复 `end_current_round` 崩溃** - 添加先攻列表存在性检查，防止 `KeyError`
+- **修复 `get_great_sf_rule` 崩溃** - 新群组首次使用技能检定时不再因 `fetchone()` 返回 `None` 而崩溃
+- **修复 `status` 命令错误路径** - 错误提示现在正确通过 `event.plain_result()` 发送
+- **修复 `.log get` 崩溃** - `export_session` 调用参数数量不匹配已修复
+- **修复日志导出 `isDice` 字段** - 导出的 JSON 现在正确标记骰子消息（之前硬编码为 `False`）
+- **修复日志导出时区** - 移除硬编码的 UTC+8 偏移，改为使用系统本地时区
 
-### Removed
+### 🗑️ 移除
 
-- Completely remove `faker` dependency - removed `generate_names()`, `.name` command, and all related config
-- Remove unused `component/initiative.py` - main.py has its own complete initiative implementation
-- Remove dead code - unused imports, deprecated `fetch_group_rule()`, commented-out old log block, unused `log_help_str` and `GLOBAL_SET`
+- **完全移除 `faker` 依赖** - 移除 `generate_names()` 函数、`.name` 命令及所有相关配置
+- **移除未使用的 `component/initiative.py`** - `main.py` 中已有完整的先攻实现
+- **清理死代码** - 移除未使用的导入（`datetime`、`hashlib`、`ast`、`json`、`uuid`、`sqlite3`）、废弃的 `fetch_group_rule()` 函数、已注释的旧 log 代码块、未使用的 `log_help_str` 和 `GLOBAL_SET` 变量
 
-### Improved
+### ✨ 改进
 
-- Initiative messages now customizable via `get_output()` config
-- Streamlined `_conf_schema.json` - removed duplicate config entries, added variable placeholder docs in descriptions
-- Improved `component/sanity.py` encapsulation - uses new `get_output_list()` instead of private `_config`
-- `@register` metadata aligned with `metadata.yaml`
-- Updated README.md with keep-highest dice, initiative system, and config documentation
-- Bare `except` clauses replaced with specific exception types
+- **先攻系统消息可自定义** - 所有先攻相关输出现在通过 `get_output()` 管理，可在配置中自定义
+- **精简 `_conf_schema.json`** - 移除大量重复配置项，每个配置项的 description 中标注了可用的变量占位符
+- **改进 `component/sanity.py` 封装** - 不再直接导入 `_config` 私有变量，改用新增的 `get_output_list()` 函数
+- **`@register` 元数据对齐** - 插件 ID 和版本号现与 `metadata.yaml` 一致
+- **更新 README.md** - 补充保留最高骰、先攻系统、配置说明等文档
+- **裸 `except` 改为具体异常类型** - 提高错误定位能力
 
 ---
 
