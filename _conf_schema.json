@@ -420,6 +420,16 @@
             "type": "text",
             "default": "修正值 `{modifier}` 无效！"
           },
+          "keep_error": {
+            "description": "k值越界错误 (变量: keep, dice_count)",
+            "type": "text",
+            "default": "k{keep} 无效：保留数量必须在 1 到 {dice_count} 之间"
+          },
+          "repeat_limit_error": {
+            "description": "重复次数超限 (变量: max_repeat)",
+            "type": "text",
+            "default": "重复次数不能超过 {max_repeat} 次"
+          },
           "roll_types": {
             "description": "掷骰类型标签",
             "type": "object",
@@ -745,6 +755,13 @@
         "type": "int",
         "default": 6,
         "slider": { "min": 1, "max": 10, "step": 1 }
+      },
+      "max_repeat": {
+        "description": "# 重复掷骰最大次数",
+        "type": "int",
+        "hint": "例如 20#1d6 的最大允许次数",
+        "default": 20,
+        "slider": { "min": 1, "max": 100, "step": 1 }
       },
       "bonus_penalty": {
         "description": "奖励/惩罚骰配置",

@@ -27,8 +27,19 @@ class JSONLoggerCore:
     def _get_index_path(self, group_id: str) -> str:
         return os.path.join(self._get_group_dir(group_id), "index.json")
 
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
+        """清理会话名称，防止路径穿越和非法字符。"""
+        # 移除路径分隔符和控制字符
+        name = re.sub(r'[/\\:*?"<>|\x00-\x1f]', '', name)
+        # 防止 .. 穿越
+        name = name.replace('..', '')
+        # 限制长度
+        name = name[:64].strip()
+        return name or uuid.uuid4().hex[:8]
+
     def _get_session_path(self, group_id: str, session_name: str) -> str:
-        return os.path.join(self._get_group_dir(group_id), f"{session_name}.json")
+        return os.path.join(self._get_group_dir(group_id), f"{self._sanitize_name(session_name)}.json")
 
     def _get_lock(self, group_id: str) -> asyncio.Lock:
         return self.locks.setdefault(group_id, asyncio.Lock())

@@ -34,11 +34,16 @@ def parse_dice_expression(expression):
     支持普通骰、奖励/惩罚骰、吸血鬼骰等。
     返回 (总和, 格式化字符串)
     """
-    expression = expression.replace("x", "*").replace("X", "*")
+    expression = expression.replace("x", "*").replace("X", "*").strip()
+
+    # 表达式长度限制，防止 ReDoS 和超长解析
+    if len(expression) > 200:
+        return None, get_output("dice.format_error", expr=expression[:20] + "...")
 
     # 从配置获取骰子限制
     max_count = get_config("dice.max_count", 100)
     max_faces = get_config("dice.max_faces", 1000)
+    max_repeat = get_config("dice.max_repeat", 20)
     vampire_default_difficulty = get_config("dice.vampire_default_difficulty", 6)
 
     match_repeat = re.match(r"(\d+)?#(.+)", expression) # Match 3#2d20
@@ -48,6 +53,9 @@ def parse_dice_expression(expression):
 
     if match_repeat:    # Matched: roll group(2) for group(1) times
         roll_times = int(match_repeat.group(1)) if match_repeat.group(1) else 1
+        # 重复次数上限
+        if roll_times > max_repeat:
+            return None, get_output("dice.repeat_limit_error", max_repeat=max_repeat)
         expression = match_repeat.group(2)
 
         if expression in ["p", "b"]:
@@ -79,12 +87,20 @@ def parse_dice_expression(expression):
 
                 dice_count = int(match.group(1)) if match.group(1) else 1
                 dice_faces = int(match.group(2))
-                keep_highest = int(match.group(3)[1:]) if match.group(3) else dice_count
+                raw_keep = int(match.group(3)[1:]) if match.group(3) else None
                 modifier = match.group(4)
                 vampire_difficulty = (int(match.group(6)) if match.group(5) and match.group(5).strip() != "v" else vampire_default_difficulty) if match.group(5) else None
 
                 if not (1 <= dice_count <= max_count and 1 <= dice_faces <= max_faces):
                     return None, get_output("dice.limit_error")
+
+                # k 值校验：必须在 [1, dice_count] 范围内
+                if raw_keep is not None:
+                    if not (1 <= raw_keep <= dice_count):
+                        return None, get_output("dice.keep_error", keep=raw_keep, dice_count=dice_count)
+                    keep_highest = raw_keep
+                else:
+                    keep_highest = dice_count
 
                 # COC 奖励/惩罚骰
                 if dice_count == 1 and dice_faces == 100 and (bonus_dice > 0 or penalty_dice > 0):

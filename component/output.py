@@ -314,6 +314,15 @@ def get_config(key: str, default=None):
 
     return config
 
+def get_config_int(key: str, default: int = 0) -> int:
+    """获取整数类型的配置值，确保返回 int，无法转换时返回 default。"""
+    v = get_config(key, default)
+    try:
+        return int(v)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
 def verify_config_initialization():
     """
     验证配置是否已正确初始化。

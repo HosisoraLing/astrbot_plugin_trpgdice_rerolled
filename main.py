@@ -17,7 +17,7 @@ import os
 from .component import character as charmod
 from .component import dice as dice_mod
 from .component import sanity
-from .component.output import get_output, get_config, set_config
+from .component.output import get_output, get_config, get_config_int, set_config
 from .component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character
 from .component.rules import modify_coc_great_sf_rule_command
 from .component.log import JSONLoggerCore
@@ -129,8 +129,15 @@ class DicePlugin(Star):
             int_dice_count = int(dice_count)
             int_difficulty = int(difficulty)
         except ValueError:
-            err = get_output("dice.vampire.error", error="非法数值")
-            yield event.plain_result(err)
+            yield event.plain_result(get_output("dice.vampire.error", error="非法数值"))
+            return
+
+        max_count = get_config_int("dice.max_count", 100)
+        if not (1 <= int_dice_count <= max_count):
+            yield event.plain_result(get_output("dice.vampire.error", error=f"骰子数量须在 1-{max_count} 之间"))
+            return
+        if not (1 <= int_difficulty <= 10):
+            yield event.plain_result(get_output("dice.vampire.error", error="难度须在 1-10 之间"))
             return
 
         result_body = dice_mod.roll_dice_vampire(int_dice_count, int_difficulty)
@@ -276,8 +283,7 @@ class DicePlugin(Star):
         user_name = event.get_sender_name()
         characters = charmod.get_all_characters(user_id)
 
-        if not name:
-            name = user_name
+        name = charmod.sanitize_name(name or user_name or "调查员")
 
         if name in characters:
             yield event.plain_result(get_output("pc.create.duplicate", name=name))
@@ -757,6 +763,11 @@ class DicePlugin(Star):
             if not player_name:
                 player_name = user_name
 
+        # 先攻值范围限制
+        init_value = max(-9999, min(init_value, 9999))
+        # 角色名长度限制
+        player_name = player_name[:50].strip() or user_name
+
         item = self.InitiativeItem(player_name, init_value, user_id)
         self.remove_by_name(player_name, group_id)
         self.add_item(item, group_id)
@@ -968,6 +979,7 @@ class DicePlugin(Star):
         
     @filter.command("fireball")
     async def fireball_cmd(self, event: AstrMessageEvent, ring: int = 3):
+        ring = max(3, min(ring, 20))
         result = dice_mod.fireball(ring)
         result = await self._beautify(result, event)
         yield event.plain_result(result)
@@ -994,6 +1006,7 @@ class DicePlugin(Star):
         Args:
             expression(string): 骰子表达式，例如 1d100、3d6、2d6+5、10d6k5（保留最高5个）、3#1d20（掷3次）
         """
+        expression = expression.strip()[:200]
         return dice_mod.handle_roll_dice(expression, name=event.get_sender_name())
 
     @filter.llm_tool(name="skill_check")
@@ -1004,6 +1017,8 @@ class DicePlugin(Star):
             skill_name(string): 技能名称，例如 侦查、射击、格斗
             skill_value(number): 技能当前值（0-100）
         """
+        skill_name = skill_name.strip()[:30]
+        skill_value = max(0, min(int(skill_value), 100))
         group_id = str(event.get_group_id() or "0")
         name = event.get_sender_name()
         return dice_mod.roll_attribute(skill_name, skill_value, group_id, name)
@@ -1076,6 +1091,16 @@ class DicePlugin(Star):
             template_key(string): 模板路径，例如 dice.normal.success、skill_check.normal、san.check_result.loss
             template_value(string): 新的模板内容，使用 {变量名} 占位符，例如 {name} 掷出了 {result}，总计 {total} 点！
         """
+        # key：只允许字母/数字/点，防止注入奇怪路径
+        if not re.match(r'^[a-zA-Z0-9_.]{1,80}$', template_key):
+            return "模板路径格式无效，仅允许字母、数字和点。"
+        # value：限制长度，防止过大
+        template_value = template_value[:500]
+        # 占位符安全检查：确保花括号已正确配对
+        try:
+            template_value.format_map({k: '' for k in re.findall(r'\{(\w+)\}', template_value)})
+        except (KeyError, ValueError):
+            return "模板格式无效，请检查花括号是否配对。"
         from .component.output import set_output_override
         _, msg = set_output_override(template_key, template_value)
         return msg
@@ -1088,6 +1113,8 @@ class DicePlugin(Star):
             enabled(boolean): 是否启用 LLM 美化模式
             system_prompt(string): LLM 美化时使用的系统提示词，留空则使用默认提示词
         """
+        if system_prompt and len(system_prompt) > 2000:
+            return "系统提示词过长，请控制在 2000 字以内。"
         from .component.output import set_config_override
         set_config_override("llm_mode.enabled", enabled)
         if system_prompt:
@@ -1192,7 +1219,7 @@ class DicePlugin(Star):
             if dice_match:
                 dice_size = dice_match.group(1)
                 expr = f"1d{dice_size}"
-                remark = raw[(len(dice_size)):].strip()
+                remark = raw[(len(dice_size)):].strip()[:100]
             else:
                 expr = f"1d{default_dice}"
                 remark = raw.strip()
@@ -1202,7 +1229,7 @@ class DicePlugin(Star):
             r_match = re.match(r'([0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
             if r_match:
                 expr = r_match.group(1)
-                remark = message[1+len(expr):].strip()
+                remark = message[1+len(expr):].strip()[:100]
             else:
                 expr = message[1:].strip()
                 # 如果没有指定骰子，使用默认骰子

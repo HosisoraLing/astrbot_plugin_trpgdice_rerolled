@@ -2,8 +2,14 @@ import os
 import json
 import uuid
 import random
+import re
 
 from .output import get_output
+
+# 人物卡名称：仅允许中英文、数字、空格、下划线和连字符，最长 40 字
+_NAME_PATTERN = re.compile(r'^[\u4e00-\u9fa5a-zA-Z0-9 _\-]{1,40}$')
+# 属性名：同上，最长 20 字
+_ATTR_PATTERN = re.compile(r'^[\u4e00-\u9fa5a-zA-Z0-9_]{1,20}$')
 
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FOLDER = os.path.join(PLUGIN_DIR, "..", "chara_data")
@@ -195,13 +201,32 @@ def get_skill_value(user_id: str, skill_name: str):
         return 0
     return chara_data["attributes"][skill_name]
 
+def sanitize_name(name: str) -> str:
+    """清理人物卡名称，去掉非法字符并截断至 40 字。"""
+    # 去掉路径分隔符等危险字符
+    name = re.sub(r'[/\\:*?"<>|\x00-\x1f]', '', name).strip()
+    return name[:40] or "调查员"
+
+
+def is_valid_attr_name(attr: str) -> bool:
+    """属性名只允许中英文和数字，长度 1-20。"""
+    return bool(_ATTR_PATTERN.match(attr))
+
+
 def create_character(user_id: str, name: str, attributes: dict):
     """
     创建新人物卡，自动生成唯一ID，并设为当前人物卡。
     返回新人物卡ID。
     """
+    name = sanitize_name(name)
+    # 过滤非法属性名，属性值限制在 [0, 9999]
+    safe_attrs = {
+        k: max(0, min(int(v), 9999)) if isinstance(v, (int, float)) else v
+        for k, v in attributes.items()
+        if isinstance(k, str) and is_valid_attr_name(k)
+    }
     chara_id = str(uuid.uuid4())
-    data = {"id": chara_id, "name": name, "attributes": attributes}
+    data = {"id": chara_id, "name": name, "attributes": safe_attrs}
     save_character(user_id, chara_id, data)
     set_current_character(user_id, chara_id)
     return chara_id

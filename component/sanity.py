@@ -23,10 +23,16 @@ def parse_san_loss_formula(formula: str):
     """
     解析 SAN 损失公式，返回成功和失败时的损失表达式。
     例如 "1d6/1d10" -> ("1d6", "1d10")
+    合法格式：XdY 或 N，两部分以 / 分隔，各部分不超过 20 字符。
     """
+    formula = formula.strip()[:50]  # 长度限制
+    _LOSS_PART = re.compile(r"^\d{1,4}(?:[dD]\d{1,4})?$")
     parts = formula.split("/")
-    success_part = parts[0]
-    failure_part = parts[1] if len(parts) > 1 else parts[0]
+    success_part = parts[0].strip()
+    failure_part = parts[1].strip() if len(parts) > 1 else success_part
+    # 格式校验：每部分必须是纯数字或 XdY
+    if not _LOSS_PART.match(success_part) or not _LOSS_PART.match(failure_part):
+        return None, None   # 调用方检查 None 并报错
     return success_part, failure_part
 
 def roll_loss(loss_expr: str):
@@ -54,6 +60,8 @@ def san_check(chara_data: dict, loss_formula: str):
     dice_max = get_config("sanity.dice_range.max", 100)
     roll_result = random.randint(dice_min, dice_max)
     success_loss, failure_loss = parse_san_loss_formula(loss_formula)
+    if success_loss is None:
+        return roll_result, san_value, get_output("san.check.failure"), 0, san_value
 
     if roll_result <= san_value:
         loss = roll_loss(success_loss)
