@@ -77,7 +77,6 @@ class DicePlugin(Star):
         try:
             prov = self.context.get_using_provider(umo=event.unified_msg_origin)
             if not prov:
-                logger.debug("[LLM美化] 未找到可用的LLM provider，使用原始输出")
                 return raw_text
             system_prompt = get_config("llm_mode.system_prompt", _LLM_DEFAULT_SYSTEM_PROMPT) or _LLM_DEFAULT_SYSTEM_PROMPT
             model = get_config("llm_mode.model", "") or None
@@ -87,19 +86,8 @@ class DicePlugin(Star):
                 system_prompt=system_prompt,
                 model=model
             )
-            # 检查响应是否有效
-            if resp is None:
-                logger.warning("[LLM美化] LLM返回空响应，使用原始输出")
-                return raw_text
-            if not hasattr(resp, 'completion_text') or resp.completion_text is None:
-                logger.warning("[LLM美化] LLM响应缺少completion_text，使用原始输出")
-                return raw_text
-            if not resp.completion_text.strip():
-                logger.warning("[LLM美化] LLM返回空文本，使用原始输出")
-                return raw_text
-            return resp.completion_text
-        except Exception as e:
-            logger.warning(f"[LLM美化] 调用LLM时出错: {type(e).__name__}: {e}，使用原始输出")
+            return resp.completion_text or raw_text
+        except Exception:
             return raw_text
 
     # @filter.command("r")
@@ -1109,10 +1097,10 @@ class DicePlugin(Star):
         # value：限制长度，防止过大
         template_value = template_value[:500]
         # 占位符安全检查：确保花括号已正确配对
-        try:
-            template_value.format_map({k: '' for k in re.findall(r'\{(\w+)\}', template_value)})
-        except (KeyError, ValueError):
-            return "模板格式无效，请检查花括号是否配对。"
+        open_braces = template_value.count('{')
+        close_braces = template_value.count('}')
+        if open_braces != close_braces:
+            return "模板格式无效，花括号未正确配对（开括号数与闭括号数不等）。"
         from .component.output import set_output_override
         _, msg = set_output_override(template_key, template_value)
         return msg
