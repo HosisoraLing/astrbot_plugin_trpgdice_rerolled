@@ -2,6 +2,16 @@ import random
 
 from .output import get_output, get_config
 
+
+async def get_sender_nickname(client, group_id, sender_id):
+    payloads = {
+        "group_id": group_id,
+        "user_id": sender_id,
+        "no_cache": True
+    }
+    ret = await client.api.call_action("get_group_member_info", **payloads)
+    return ret["card"]
+
 def get_db_build(str_val, siz_val):
     """
     根据力量和体型计算DB和Build。
