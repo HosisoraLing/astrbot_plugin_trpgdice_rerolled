@@ -14,6 +14,40 @@ _overrides: dict = {}  # {"output": {"key.path": "template"}, "config": {"key.pa
 _overrides_loaded = False
 
 
+def _resolve_path_value(source, keys):
+    """按点路径读取配置节点，兼容带 items/default 的 Schema 结构。"""
+    value = source
+    for key in keys:
+        if not isinstance(value, dict):
+            return None
+        if "items" in value:
+            value = value["items"]
+        if key not in value:
+            return None
+        value = value[key]
+    if isinstance(value, dict) and "default" in value:
+        return value["default"]
+    return value
+
+
+def _get_defined_output_template(key: str):
+    """读取配置或 Schema 中定义的输出模板原始值，不包含本地 override。"""
+    if _config is not None:
+        config_template = _resolve_path_value(_config.get("output", {}), key.split("."))
+        if config_template is not None:
+            return config_template
+
+    schema = _load_schema()
+    if not schema:
+        return None
+    return _resolve_path_value(schema.get("output", {}), key.split("."))
+
+
+def has_output_template(key: str) -> bool:
+    """判断给定输出模板 key 是否已在配置或 Schema 中定义。"""
+    return isinstance(_get_defined_output_template(key), str)
+
+
 def _load_overrides() -> dict:
     """加载本地覆盖文件，若不存在则返回空字典。"""
     global _overrides, _overrides_loaded
@@ -48,6 +82,8 @@ def set_output_override(key: str, value: str):
     返回 (success: bool, message: str)
     """
     _load_overrides()
+    if not isinstance(value, str) or not value.strip():
+        return False, f"输出模板 [{key}] 不能为空。"
     _overrides["output"][key] = value
     _save_overrides()
     return True, f"输出模板 [{key}] 已更新。"
@@ -146,59 +182,13 @@ def get_output(key: str, **kwargs):
     overrides = _load_overrides()
     if key in overrides.get("output", {}):
         template = overrides["output"][key]
-        try:
-            return template.format(**kwargs)
-        except Exception:
-            return template
+        if isinstance(template, str) and template.strip():
+            try:
+                return template.format(**kwargs)
+            except Exception:
+                return template
 
-    keys = key.split(".")
-
-    # 其次尝试从 AstrBot 配置中获取用户自定义值
-    template = _config.get("output", {})
-    for k in keys:
-        if isinstance(template, dict):
-            # 如果有 items 字段，先导航到 items
-            if "items" in template:
-                template = template["items"]
-
-            # 现在查找 key
-            if k in template:
-                template = template[k]
-            else:
-                template = None
-                break
-        else:
-            template = None
-            break
-
-    # 如果配置中没有找到，从 schema 中获取默认值
-    if template is None or (isinstance(template, dict) and "default" not in template):
-        schema = _load_schema()
-        if schema:
-            schema_template = schema.get("output", {})
-            for k in keys:
-                if isinstance(schema_template, dict):
-                    # 如果有 items 字段，先导航到 items
-                    if "items" in schema_template:
-                        schema_template = schema_template["items"]
-
-                    # 现在查找 key
-                    if k in schema_template:
-                        schema_template = schema_template[k]
-                    else:
-                        return ""
-                else:
-                    return ""
-
-            # 如果最终结果有 default 字段，使用它
-            if isinstance(schema_template, dict) and "default" in schema_template:
-                template = schema_template["default"]
-            else:
-                template = schema_template
-
-    # 如果最终结果有 default 字段，使用它
-    if isinstance(template, dict) and "default" in template:
-        template = template["default"]
+    template = _get_defined_output_template(key)
 
     if not isinstance(template, str):
         return ""
