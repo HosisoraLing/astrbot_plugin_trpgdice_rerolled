@@ -364,37 +364,6 @@
               }
             }
           },
-          "vampire": {
-            "description": "吸血鬼骰",
-            "type": "object",
-            "items": {
-              "success": {
-                "description": "吸血鬼骰结果 (变量: name, result)",
-                "type": "text",
-                "default": "{name} 的结果是: {result}~"
-              },
-              "error": {
-                "description": "吸血鬼骰错误 (变量: error)",
-                "type": "text",
-                "default": "吸血鬼掷骰错误: {error}"
-              },
-              "success_result": {
-                "description": "成功结果 (变量: success_num)",
-                "type": "text",
-                "default": "，成功！成功数为{success_num}~"
-              },
-              "great_failure": {
-                "description": "大失败",
-                "type": "text",
-                "default": "，大失败！！！"
-              },
-              "failure": {
-                "description": "失败",
-                "type": "text",
-                "default": "，失败！"
-              }
-            }
-          },
           "hidden": {
             "description": "隐藏掷骰",
             "type": "object",
@@ -415,11 +384,6 @@
                 "default": "已进行隐藏掷骰~"
               }
             }
-          },
-          "detail": {
-            "description": "掷骰详情 (变量: detail)",
-            "type": "text",
-            "default": "掷骰详情: {detail}"
           },
           "format_error": {
             "description": "格式错误 (变量: expr)",
@@ -461,11 +425,6 @@
                 "default": "惩罚骰"
               }
             }
-          },
-          "vampire_roll": {
-            "description": "吸血鬼掷骰格式 (变量: vampire_difficulty, dice_count, rolls)",
-            "type": "text",
-            "default": "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
           },
           "keep_highest": {
             "description": "保留最高骰 (变量: dice_count, dice_faces, keep_highest, subtotal, kept, dropped, rolls)",
@@ -765,12 +724,6 @@
         "hint": "骰子最多可以有多少面",
         "default": 1000,
         "slider": { "min": 10, "max": 10000, "step": 100 }
-      },
-      "vampire_default_difficulty": {
-        "description": "吸血鬼骰默认难度",
-        "type": "int",
-        "default": 6,
-        "slider": { "min": 1, "max": 10, "step": 1 }
       },
       "max_repeat": {
         "description": "# 重复掷骰最大次数",

@@ -6,9 +6,11 @@ import hashlib
 from .output import get_output, get_config
 from .rules import great_success_range, great_failure_range, get_great_sf_rule, set_great_sf_rule, GREAT_SF_RULE_DEFAULT, GREAT_SF_RULE_STR
 
+
 def roll_dice(dice_count, dice_faces):
     """掷 `dice_count` 个 `dice_faces` 面骰"""
     return [random.randint(1, dice_faces) for _ in range(dice_count)]
+
 
 def roll_coc_bonus_penalty(base_roll, bonus_dice=0, penalty_dice=0):
     """奖励骰 / 惩罚骰"""
@@ -28,32 +30,29 @@ def roll_coc_bonus_penalty(base_roll, bonus_dice=0, penalty_dice=0):
         return max([base_roll] + alternatives)
     return base_roll
 
+
 def parse_dice_expression(expression):
     """
     解析骰子表达式，并格式化输出。
-    支持普通骰、奖励/惩罚骰、吸血鬼骰等。
+    支持普通骰、奖励/惩罚骰。
     返回 (总和, 格式化字符串, 是否连续掷骰)
     """
     expression = expression.replace("x", "*").replace("X", "*").strip()
 
-    # 表达式长度限制，防止 ReDoS 和超长解析
     if len(expression) > 200:
         return None, get_output("dice.format_error", expr=expression[:20] + "..."), False
 
-    # 从配置获取骰子限制
     max_count = get_config("dice.max_count", 100)
     max_faces = get_config("dice.max_faces", 1000)
     max_repeat = get_config("dice.max_repeat", 20)
-    vampire_default_difficulty = get_config("dice.vampire_default_difficulty", 6)
 
-    match_repeat = re.match(r"(\d+)?#(.+)", expression) # Match 3#2d20
+    match_repeat = re.match(r"(\d+)?#(.+)", expression)
     roll_times = 1
     bonus_dice = 0
     penalty_dice = 0
 
-    if match_repeat:    # Matched: roll group(2) for group(1) times
+    if match_repeat:
         roll_times = int(match_repeat.group(1)) if match_repeat.group(1) else 1
-        # 重复次数上限
         if roll_times > max_repeat:
             return None, get_output("dice.repeat_limit_error", max_repeat=max_repeat), False
         expression = match_repeat.group(2)
@@ -61,7 +60,6 @@ def parse_dice_expression(expression):
         if expression in ["p", "b"]:
             penalty_dice = 1 if expression == "p" else 0
             bonus_dice = 1 if expression == "b" else 0
-            # 从配置获取奖励/惩罚骰配置
             bonus_penalty_dice_count = get_config("dice.bonus_penalty.dice_count", 1)
             bonus_penalty_base_faces = get_config("dice.bonus_penalty.base_faces", 100)
             expression = f"{bonus_penalty_dice_count}d{bonus_penalty_base_faces}"
@@ -74,7 +72,7 @@ def parse_dice_expression(expression):
         parts = re.split(r"([+\-*])", expression)
         subtotal = None
         formatted_parts = []
-        roll_total = None  # 每次掷骰的独立总计
+        roll_total = None
 
         for i in range(0, len(parts), 2):
             expr = parts[i].strip()
@@ -84,7 +82,7 @@ def parse_dice_expression(expression):
                 subtotal = int(expr)
                 roll_result = f"{subtotal}"
             else:
-                match = re.match(r"(\d*)[dD](\d+)([kK]\d+)?([+\-*]\d+)?([vV](\d+)?)?", expr)
+                match = re.match(r"(\d*)[dD](\d+)([kK]\d+)?([+\-*]\d+)?", expr)
                 if not match:
                     return None, get_output("dice.format_error", expr=expr), False
 
@@ -92,12 +90,10 @@ def parse_dice_expression(expression):
                 dice_faces = int(match.group(2))
                 raw_keep = int(match.group(3)[1:]) if match.group(3) else None
                 modifier = match.group(4)
-                vampire_difficulty = (int(match.group(6)) if match.group(5) and match.group(5).strip() != "v" else vampire_default_difficulty) if match.group(5) else None
 
                 if not (1 <= dice_count <= max_count and 1 <= dice_faces <= max_faces):
                     return None, get_output("dice.limit_error"), False
 
-                # k 值校验：必须在 [1, dice_count] 范围内
                 if raw_keep is not None:
                     if not (1 <= raw_keep <= dice_count):
                         return None, get_output("dice.keep_error", keep=raw_keep, dice_count=dice_count), False
@@ -118,33 +114,6 @@ def parse_dice_expression(expression):
                         roll_type = get_output("dice.roll_types.penalty")
                     subtotal = final_tens * 10 + unit
                     roll_result = f"{expr} = [D100: {base_tens * 10 + unit}, {roll_type}: {', '.join(map(str, rolls))}] → {subtotal}"
-
-                elif vampire_difficulty:
-                    rolls = [random.randint(1, dice_faces) for _ in range(dice_count)]
-                    sorted_rolls = sorted(rolls, reverse=True)
-                    success_num = 0
-                    failure_flag = False
-                    success_flag = False
-                    super_failure = False
-
-                    for a_roll in sorted_rolls:
-                        if a_roll == 1:
-                            success_num -= 1
-                            failure_flag = True
-                        elif a_roll >= vampire_difficulty:
-                            success_num += 1
-                            success_flag = True
-                    if failure_flag and not success_flag:
-                        super_failure = True
-
-                    roll_result = get_output("dice.vampire_roll", vampire_difficulty=vampire_difficulty, dice_count=dice_count, rolls=', '.join(map(str, sorted_rolls)))
-                    if success_num > 0:
-                        roll_result += get_output("dice.vampire.success_result", success_num=success_num)
-                    elif super_failure:
-                        roll_result += get_output("dice.vampire.great_failure")
-                    else:
-                        roll_result += get_output("dice.vampire.failure")
-                    subtotal = None  # 吸血鬼骰不返回总和
 
                 else:
                     # 普通骰子
@@ -185,16 +154,15 @@ def parse_dice_expression(expression):
                         subtotal = subtotal_before_mod
 
             # 计算单次掷骰的表达式
-            if not vampire_difficulty:
-                if roll_total is None:
-                    roll_total = subtotal
-                else:
-                    if operator == "+":
-                        roll_total += subtotal
-                    elif operator == "-":
-                        roll_total -= subtotal
-                    elif operator == "*":
-                        roll_total *= subtotal
+            if roll_total is None:
+                roll_total = subtotal
+            else:
+                if operator == "+":
+                    roll_total += subtotal
+                elif operator == "-":
+                    roll_total -= subtotal
+                elif operator == "*":
+                    roll_total *= subtotal
 
             # 存储格式化骰子结果
             if i == 0:
@@ -204,28 +172,40 @@ def parse_dice_expression(expression):
 
         # 最终格式化输出
         if is_multi_roll:
-            # 连续掷骰模式：每次掷骰单独一行
-            if not vampire_difficulty:
-                results.append(f"{'  '.join(formatted_parts)} = {roll_total}")
-            else:
-                results.append(f"{'  '.join(formatted_parts)}")
-            total = roll_total  # 保留最后一次的总计
+            results.append(f"{'  '.join(formatted_parts)} = {roll_total}")
         else:
-            # 单次掷骰模式
-            if not vampire_difficulty:
-                final_result = f"{'  '.join(formatted_parts)} = {roll_total}"
-                results.append(f"{final_result}")
-            else:
-                final_result = f"{'  '.join(formatted_parts)}"
-                results.append(f"{final_result}")
-            total = roll_total
+            results.append(f"{'  '.join(formatted_parts)} = {roll_total}")
+        total = roll_total
 
     return total, "\n".join(results), is_multi_roll
 
+
+def handle_roll_dice(expression: str, user_id: str = None, name: str = None, remark=None):
+    """处理骰子表达式，返回格式化后的掷骰结果字符串。"""
+    total, result_message, is_multi_roll = parse_dice_expression(expression)
+    if total is None and not is_multi_roll:
+        return get_output("dice.normal.error", error=result_message)
+    if is_multi_roll:
+        if remark:
+            return get_output("dice.multi_roll.success_remark", result=result_message, name=name, remark=remark)
+        return get_output("dice.multi_roll.success", result=result_message, name=name)
+    if remark:
+        return get_output("dice.normal.success_remark", result=result_message, total=total, name=name, remark=remark)
+    return get_output("dice.normal.success", result=result_message, total=total, name=name)
+
+
+def roll_hidden(message: str = None):
+    """私聊掷骰，返回格式化字符串。"""
+    default_dice = get_config("dice.default_faces", 100)
+    message = message.strip() if message else f"1d{default_dice}"
+    total, result_message, is_multi_roll = parse_dice_expression(message)
+    if total is None and not is_multi_roll:
+        return get_output("dice.hidden.error", error=result_message)
+    return get_output("dice.hidden.success", result=result_message)
+
+
 def roll_attribute(skill_name, skill_value, group_id, name):
-    """
-    普通技能判定
-    """
+    """普通技能判定"""
     try:
         skill_value = int(skill_value)
     except ValueError:
@@ -235,7 +215,6 @@ def roll_attribute(skill_name, skill_value, group_id, name):
     ones_digit = random.randint(0, 9)
     roll_result = 100 if (tens_digit == 0 and ones_digit == 0) else (tens_digit * 10 + ones_digit)
 
-    # 这里建议 get_roll_result 也迁移到 dice.py 或 rules.py
     result = get_roll_result(roll_result, skill_value, str(group_id))
 
     return get_output(
@@ -244,13 +223,12 @@ def roll_attribute(skill_name, skill_value, group_id, name):
         roll_result=roll_result,
         skill_value=skill_value,
         result=result,
-        name = name
+        name=name
     )
 
+
 def roll_attribute_penalty(dice_count, skill_name, skill_value, group_id, name):
-    """
-    技能判定（惩罚骰）
-    """
+    """技能判定（惩罚骰）"""
     try:
         dice_count = int(dice_count)
         skill_value = int(skill_value)
@@ -276,13 +254,12 @@ def roll_attribute_penalty(dice_count, skill_name, skill_value, group_id, name):
         final_y=final_y,
         skill_value=skill_value,
         result=result,
-        name = name
+        name=name
     )
 
+
 def roll_attribute_bonus(dice_count, skill_name, skill_value, group_id, name):
-    """
-    技能判定（奖励骰）
-    """
+    """技能判定（奖励骰）"""
     try:
         dice_count = int(dice_count)
         skill_value = int(skill_value)
@@ -310,51 +287,12 @@ def roll_attribute_bonus(dice_count, skill_name, skill_value, group_id, name):
         final_y=final_y,
         skill_value=skill_value,
         result=result,
-        name = name
+        name=name
     )
 
-def handle_roll_dice(expression: str, user_id: str = None, name : str = None, remark = None):
-    """
-    处理骰子表达式，返回格式化后的掷骰结果字符串。
-    可根据需要扩展 user_id 用于个性化输出。
-    """
-    total, result_message, is_multi_roll = parse_dice_expression(expression)
-    if total is None and not is_multi_roll:
-        return get_output("dice.normal.error", error=result_message)
-    if is_multi_roll:
-        # 连续掷骰模式
-        if remark:
-            return get_output("dice.multi_roll.success_remark", result=result_message, name=name, remark=remark)
-        return get_output("dice.multi_roll.success", result=result_message, name=name)
-    if remark:
-        return get_output("dice.normal.success_remark", result=result_message, total=total, name=name, remark=remark)
-    return get_output("dice.normal.success", result=result_message, total=total, name=name)
-
-def roll_dice_vampire(dice_count: int, difficulty: int):
-    """
-    吸血鬼规则掷骰，返回格式化字符串。
-    """
-    expr = f"{dice_count}d10v{difficulty}"
-    _, result_message, _ = parse_dice_expression(expr)
-    return result_message
-
-def roll_hidden(message: str = None):
-    """
-    私聊掷骰，返回格式化字符串。
-    """
-    default_dice = get_config("dice.default_faces", 100)
-    message = message.strip() if message else f"1d{default_dice}"
-    total, result_message, is_multi_roll = parse_dice_expression(message)
-    if total is None and not is_multi_roll:
-        return get_output("dice.hidden.error", error=result_message)
-    else:
-        return get_output("dice.hidden.success", result=result_message)
 
 def get_roll_result(roll_result: int, skill_value: int, group: str):
-    """
-    根据掷骰结果和技能值计算判定结果文本（COC规则）。
-    所有输出建议通过 get_output 配置。
-    """
+    """根据掷骰结果和技能值计算判定结果文本（COC规则）。"""
     try:
         rule = get_great_sf_rule(group)
     except Exception:
@@ -378,10 +316,9 @@ def get_roll_result(roll_result: int, skill_value: int, group: str):
     else:
         return validation_prefix + get_output("coc_roll.results.failure")
 
+
 def fireball(ring: int = 3):
-    """
-    施放 n 环火球术，返回伤害字符串。
-    """
+    """施放 n 环火球术，返回伤害字符串。"""
     if ring < 3:
         return get_output("fireball.low")
     base_dice = get_config("dice.fireball.base_dice", 8)
@@ -396,14 +333,12 @@ def fireball(ring: int = 3):
         total=total_sum
     )
 
+
 def roll_RP(user_id: str):
-    """
-    今日RP（运势），返回字符串。
-    """
+    """今日RP（运势），返回字符串。"""
     max_rp = get_config("dice.rp.max_value", 100)
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     RP_str = f"{user_id}_{today}"
     hash = hashlib.sha256(RP_str.encode()).hexdigest()
     rp = int(hash, 16) % max_rp + 1
     return get_output("rp.today", rp=rp)
-

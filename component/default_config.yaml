@@ -93,25 +93,18 @@ output:
     multi_roll:
       success: "{name} 掷骰结果:\n{result}"
       success_remark: "{name} 的 {remark} 掷骰结果:\n{result}"
-    vampire:
-      success: "{name} 的结果是: {result}~"
-      error: "吸血鬼掷骰错误: {error}"
-      success_result: "，成功！成功数为{success_num}~"
-      great_failure: "，大失败！！！"
-      failure: "，失败！"
     hidden:
       success: "隐藏掷骰结果: {result}"
       error: "隐藏掷骰错误: {error}"
       group: "已进行隐藏掷骰~"
-    detail: "掷骰详情: {detail}"
-    expression_error: "表达式错误: {error}"
     format_error: "⚠️ 格式错误 `{expr}`"
     limit_error: "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
     modifier_error: "⚠️ 修正值 `{modifier}` 无效！"
+    keep_error: "⚠️ 保留数 {keep} 超出骰子数量 {dice_count} 范围！"
+    repeat_limit_error: "⚠️ 连续掷骰次数不能超过 {max_repeat} 次！"
     roll_types:
       bonus: "奖励骰"
       penalty: "惩罚骰"
-    vampire_roll: "难度为{vampire_difficulty}的{dice_count}次掷骰 = [{rolls}]"
     keep_highest: "{dice_count}d{dice_faces}k{keep_highest}={subtotal} [{kept} | {dropped}]"
     normal_dice: "{dice_count}d{dice_faces}={subtotal} [{rolls}]"
     dice_with_modifier: "{dice_count}d{dice_faces}{modifier}={subtotal} [{rolls}] {modifier} = {total}"
@@ -215,8 +208,6 @@ dice:
   limits:
     max_count: 100
     max_faces: 1000
-  # 吸血鬼骰默认难度
-  vampire_default_difficulty: 6
   # 奖励/惩罚骰配置
   bonus_penalty:
     dice_count: 1
