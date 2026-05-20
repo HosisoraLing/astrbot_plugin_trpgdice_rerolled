@@ -348,6 +348,22 @@
               }
             }
           },
+          "multi_roll": {
+            "description": "连续掷骰",
+            "type": "object",
+            "items": {
+              "success": {
+                "description": "连续掷骰成功 (变量: name, result)",
+                "type": "text",
+                "default": "{name} 掷骰结果:\n{result}"
+              },
+              "success_remark": {
+                "description": "连续掷骰成功带备注 (变量: name, remark, result)",
+                "type": "text",
+                "default": "{name} 的 {remark} 掷骰结果:\n{result}"
+              }
+            }
+          },
           "vampire": {
             "description": "吸血鬼骰",
             "type": "object",

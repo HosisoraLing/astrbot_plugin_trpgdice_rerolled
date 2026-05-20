@@ -90,6 +90,9 @@ output:
       success: "{name} 的结果是: {result}~"
       success_remark: "{name} 的 {remark} 结果是: {result}~"
       error: "掷骰错误: {error}"
+    multi_roll:
+      success: "{name} 掷骰结果:\n{result}"
+      success_remark: "{name} 的 {remark} 掷骰结果:\n{result}"
     vampire:
       success: "{name} 的结果是: {result}~"
       error: "吸血鬼掷骰错误: {error}"
@@ -105,6 +108,8 @@ output:
     format_error: "⚠️ 格式错误 `{expr}`"
     limit_error: "⚠️ 骰子个数 1-100，面数 1-1000，否则非法！"
     modifier_error: "⚠️ 修正值 `{modifier}` 无效！"
+    keep_error: "⚠️ 保留数 {keep} 超出骰子数量 {dice_count} 范围！"
+    repeat_limit_error: "⚠️ 连续掷骰次数不能超过 {max_repeat} 次！"
     roll_types:
       bonus: "奖励骰"
       penalty: "惩罚骰"
