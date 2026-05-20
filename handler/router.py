@@ -7,8 +7,41 @@ from astrbot.api.all import *
 
 from ..component.output import get_config
 
+# 撤回事件的 notice_type
+NOTICE_GROUP_RECALL = "group_recall"
+NOTICE_FRIEND_RECALL = "friend_recall"
+
 
 class RouterMixin:
+
+    @filter.platform_adapter_type(filter.PlatformAdapterType.AIOCQHTTP)
+    @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
+    async def handle_recall_event(self, event: AstrMessageEvent):
+        """监听撤回事件，从日志中移除撤回的消息"""
+        try:
+            raw = getattr(event.message_obj, "raw_message", None)
+            if not raw:
+                return
+
+            post_type = raw.get("post_type") if isinstance(raw, dict) else getattr(raw, "post_type", None)
+            if post_type not in (None, "notice"):
+                return
+
+            notice_type = raw.get("notice_type") if isinstance(raw, dict) else getattr(raw, "notice_type", None)
+            if notice_type not in (NOTICE_GROUP_RECALL, NOTICE_FRIEND_RECALL):
+                return
+
+            recalled_msg_id = raw.get("message_id") if isinstance(raw, dict) else getattr(raw, "message_id", None)
+            group_id = raw.get("group_id") if isinstance(raw, dict) else getattr(raw, "group_id", None)
+
+            if recalled_msg_id and group_id:
+                recalled_msg_id = str(recalled_msg_id)
+                group_id = str(group_id)
+                removed = await self.logger_core.remove_message_by_id(group_id, recalled_msg_id)
+                if removed:
+                    print(f"[TRPGDice] 已从日志中移除撤回的消息: {recalled_msg_id}")
+        except Exception as e:
+            print(f"[TRPGDice] 处理撤回事件出错: {e}")
 
     # 识别所有信息
     @event_message_type(EventMessageType.GROUP_MESSAGE)
@@ -24,6 +57,7 @@ class RouterMixin:
             nickname = getattr(event.message_obj.sender, "nickname", "")
             timestamp = int(event.message_obj.timestamp)
             components = getattr(event.message_obj, "message", [])
+            message_id = getattr(event.message_obj, "message_id", None)
 
             # 调用功能性模块添加消息
             await self.logger_core.add_message(
@@ -32,7 +66,8 @@ class RouterMixin:
                 nickname=nickname,
                 timestamp=timestamp,
                 text=message,
-                components=components
+                components=components,
+                message_id=message_id
             )
         # ----------------------------------------------------
 

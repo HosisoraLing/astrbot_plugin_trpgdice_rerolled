@@ -130,7 +130,8 @@ class JSONLoggerCore:
         timestamp: int,
         text: str,
         components: Optional[List[Any]] = None,
-        isDice: bool = False
+        isDice: bool = False,
+        message_id: Optional[str] = None
     ) -> Tuple[bool, str]:
 
         grp = await self.load_group(group_id)
@@ -154,14 +155,18 @@ class JSONLoggerCore:
 
         text_clean = re.sub(r'\[CQ:image,.*?url=.*?(?:,|])', '', text).strip()
 
-        sec.setdefault("messages", []).append({
+        msg_entry = {
             "timestamp": timestamp,
             "user_id": user_id,
             "nickname": nickname,
             "text": text_clean,
             "images": images,
             "isDice": isDice
-        })
+        }
+        if message_id:
+            msg_entry["message_id"] = str(message_id)
+
+        sec.setdefault("messages", []).append(msg_entry)
 
         await self.persist_group(group_id)
         return True, get_output("log.message_added")
@@ -304,6 +309,29 @@ class JSONLoggerCore:
         del grp[name]
         await self.persist_group(group_id)
         return True, get_output("log.session_deleted", session_name=name)
+
+    async def remove_message_by_id(self, group_id: str, message_id: str) -> bool:
+        """根据 message_id 从活跃日志会话中移除消息"""
+        grp = await self.load_group(group_id)
+        active = [
+            n for n, s in grp.items()
+            if s.get("end_time") is None and not s.get("finished", False)
+        ]
+
+        if not active:
+            return False
+
+        sec = grp[active[-1]]
+        messages = sec.get("messages", [])
+        msg_id_str = str(message_id)
+
+        for i, msg in enumerate(messages):
+            if msg.get("message_id") == msg_id_str:
+                messages.pop(i)
+                await self.persist_group(group_id)
+                return True
+
+        return False
 
     async def export_session(self, group_id: str, sec: dict, name: str) -> Tuple[bool, str]:
         export_data = {"version": 1, "items": []}
