@@ -32,13 +32,13 @@ def parse_dice_expression(expression):
     """
     解析骰子表达式，并格式化输出。
     支持普通骰、奖励/惩罚骰、吸血鬼骰等。
-    返回 (总和, 格式化字符串)
+    返回 (总和, 格式化字符串, 是否连续掷骰)
     """
     expression = expression.replace("x", "*").replace("X", "*").strip()
 
     # 表达式长度限制，防止 ReDoS 和超长解析
     if len(expression) > 200:
-        return None, get_output("dice.format_error", expr=expression[:20] + "...")
+        return None, get_output("dice.format_error", expr=expression[:20] + "..."), False
 
     # 从配置获取骰子限制
     max_count = get_config("dice.max_count", 100)
@@ -55,7 +55,7 @@ def parse_dice_expression(expression):
         roll_times = int(match_repeat.group(1)) if match_repeat.group(1) else 1
         # 重复次数上限
         if roll_times > max_repeat:
-            return None, get_output("dice.repeat_limit_error", max_repeat=max_repeat)
+            return None, get_output("dice.repeat_limit_error", max_repeat=max_repeat), False
         expression = match_repeat.group(2)
 
         if expression in ["p", "b"]:
@@ -68,10 +68,13 @@ def parse_dice_expression(expression):
 
     results = []
     total = None
+    is_multi_roll = roll_times > 1
+
     for _ in range(roll_times):
         parts = re.split(r"([+\-*])", expression)
         subtotal = None
         formatted_parts = []
+        roll_total = None  # 每次掷骰的独立总计
 
         for i in range(0, len(parts), 2):
             expr = parts[i].strip()
@@ -83,7 +86,7 @@ def parse_dice_expression(expression):
             else:
                 match = re.match(r"(\d*)[dD](\d+)([kK]\d+)?([+\-*]\d+)?([vV](\d+)?)?", expr)
                 if not match:
-                    return None, get_output("dice.format_error", expr=expr)
+                    return None, get_output("dice.format_error", expr=expr), False
 
                 dice_count = int(match.group(1)) if match.group(1) else 1
                 dice_faces = int(match.group(2))
@@ -92,12 +95,12 @@ def parse_dice_expression(expression):
                 vampire_difficulty = (int(match.group(6)) if match.group(5) and match.group(5).strip() != "v" else vampire_default_difficulty) if match.group(5) else None
 
                 if not (1 <= dice_count <= max_count and 1 <= dice_faces <= max_faces):
-                    return None, get_output("dice.limit_error")
+                    return None, get_output("dice.limit_error"), False
 
                 # k 值校验：必须在 [1, dice_count] 范围内
                 if raw_keep is not None:
                     if not (1 <= raw_keep <= dice_count):
-                        return None, get_output("dice.keep_error", keep=raw_keep, dice_count=dice_count)
+                        return None, get_output("dice.keep_error", keep=raw_keep, dice_count=dice_count), False
                     keep_highest = raw_keep
                 else:
                     keep_highest = dice_count
@@ -174,24 +177,24 @@ def parse_dice_expression(expression):
                             elif op == '*':
                                 subtotal = subtotal_before_mod * val
                             else:
-                                return None, get_output("dice.modifier_error", modifier=modifier)
+                                return None, get_output("dice.modifier_error", modifier=modifier), False
                             roll_result = get_output("dice.dice_with_modifier", dice_count=dice_count, dice_faces=dice_faces, modifier=modifier, subtotal=subtotal_before_mod, rolls=' + '.join(map(str, rolls)), total=subtotal)
                         except (ValueError, ArithmeticError):
-                            return None, get_output("dice.modifier_error", modifier=modifier)
+                            return None, get_output("dice.modifier_error", modifier=modifier), False
                     else:
                         subtotal = subtotal_before_mod
 
-            # 计算表达式
+            # 计算单次掷骰的表达式
             if not vampire_difficulty:
-                if total is None:
-                    total = subtotal
+                if roll_total is None:
+                    roll_total = subtotal
                 else:
                     if operator == "+":
-                        total += subtotal
+                        roll_total += subtotal
                     elif operator == "-":
-                        total -= subtotal
+                        roll_total -= subtotal
                     elif operator == "*":
-                        total *= subtotal
+                        roll_total *= subtotal
 
             # 存储格式化骰子结果
             if i == 0:
@@ -200,14 +203,24 @@ def parse_dice_expression(expression):
                 formatted_parts.append(f"{operator} {roll_result}")
 
         # 最终格式化输出
-        if not vampire_difficulty:
-            final_result = f"{'  '.join(formatted_parts)} = {total}"
-            results.append(f"{final_result}")
+        if is_multi_roll:
+            # 连续掷骰模式：每次掷骰单独一行
+            if not vampire_difficulty:
+                results.append(f"{'  '.join(formatted_parts)} = {roll_total}")
+            else:
+                results.append(f"{'  '.join(formatted_parts)}")
+            total = roll_total  # 保留最后一次的总计
         else:
-            final_result = f"{'  '.join(formatted_parts)}"
-            results.append(f"{final_result}")
+            # 单次掷骰模式
+            if not vampire_difficulty:
+                final_result = f"{'  '.join(formatted_parts)} = {roll_total}"
+                results.append(f"{final_result}")
+            else:
+                final_result = f"{'  '.join(formatted_parts)}"
+                results.append(f"{final_result}")
+            total = roll_total
 
-    return total, "\n".join(results)
+    return total, "\n".join(results), is_multi_roll
 
 def roll_attribute(skill_name, skill_value, group_id, name):
     """
@@ -305,9 +318,14 @@ def handle_roll_dice(expression: str, user_id: str = None, name : str = None, re
     处理骰子表达式，返回格式化后的掷骰结果字符串。
     可根据需要扩展 user_id 用于个性化输出。
     """
-    total, result_message = parse_dice_expression(expression)
-    if total is None:
+    total, result_message, is_multi_roll = parse_dice_expression(expression)
+    if total is None and not is_multi_roll:
         return get_output("dice.normal.error", error=result_message)
+    if is_multi_roll:
+        # 连续掷骰模式
+        if remark:
+            return get_output("dice.multi_roll.success_remark", result=result_message, name=name, remark=remark)
+        return get_output("dice.multi_roll.success", result=result_message, name=name)
     if remark:
         return get_output("dice.normal.success_remark", result=result_message, total=total, name=name, remark=remark)
     return get_output("dice.normal.success", result=result_message, total=total, name=name)
@@ -317,7 +335,7 @@ def roll_dice_vampire(dice_count: int, difficulty: int):
     吸血鬼规则掷骰，返回格式化字符串。
     """
     expr = f"{dice_count}d10v{difficulty}"
-    _, result_message = parse_dice_expression(expr)
+    _, result_message, _ = parse_dice_expression(expr)
     return result_message
 
 def roll_hidden(message: str = None):
@@ -326,8 +344,8 @@ def roll_hidden(message: str = None):
     """
     default_dice = get_config("dice.default_faces", 100)
     message = message.strip() if message else f"1d{default_dice}"
-    total, result_message = parse_dice_expression(message)
-    if total is None:
+    total, result_message, is_multi_roll = parse_dice_expression(message)
+    if total is None and not is_multi_roll:
         return get_output("dice.hidden.error", error=result_message)
     else:
         return get_output("dice.hidden.success", result=result_message)

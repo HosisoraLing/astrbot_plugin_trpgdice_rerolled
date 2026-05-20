@@ -90,6 +90,9 @@ output:
       success: "{name} 的结果是: {result}~"
       success_remark: "{name} 的 {remark} 结果是: {result}~"
       error: "掷骰错误: {error}"
+    multi_roll:
+      success: "{name} 掷骰结果:\n{result}"
+      success_remark: "{name} 的 {remark} 掷骰结果:\n{result}"
     vampire:
       success: "{name} 的结果是: {result}~"
       error: "吸血鬼掷骰错误: {error}"
