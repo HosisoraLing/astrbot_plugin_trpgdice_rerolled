@@ -108,10 +108,8 @@ class RouterMixin:
                 remark = raw.strip()
 
         elif cmd[0] == "r":
-            # 匹配完整的骰子表达式，支持 N#expr 连续掷骰格式（如 6#4d6k3, 3#2d20+5）
-            r_match = re.match(r'(\d+#[0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
-            if not r_match:
-                r_match = re.match(r'([0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
+            # 匹配完整的骰子表达式，包括运算符、保留最高(k)和数字（如 3d6+10, 10d6k5, 2d4-1d8 等）
+            r_match = re.match(r'([0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
             if r_match:
                 expr = r_match.group(1)
                 remark = message[1+len(expr):].strip()[:100]
