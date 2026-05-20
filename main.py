@@ -33,7 +33,7 @@ _LLM_DEFAULT_SYSTEM_PROMPT = (
 )
 
 
-@register("astrbot_plugin_trpgdice_rerolled", "星空凌", "TRPG玩家用骰", "1.2.0")
+@register("astrbot_plugin_trpgdice_rerolled", "星空凌", "TRPG玩家用骰", "1.3.0")
 class DicePlugin(
     DiceMixin,
     CharacterMixin,
