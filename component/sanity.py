@@ -49,12 +49,6 @@ def roll_loss(loss_expr: str):
     return 0
 
 def san_check(chara_data: dict, loss_formula: str):
-    """
-    进行一次理智检定，返回检定结果和损失值。
-    chara_data: 当前人物卡数据（需包含'san'属性）
-    loss_formula: 损失公式，如 "1d6/1d10"
-    返回：(roll_result, san_value, result_msg, loss, new_san)
-    """
     san_value = chara_data["attributes"].get("san", 0)
     dice_min = get_config("sanity.dice_range.min", 1)
     dice_max = get_config("sanity.dice_range.max", 100)
@@ -73,28 +67,30 @@ def san_check(chara_data: dict, loss_formula: str):
     new_san = max(0, san_value - loss)
     return roll_result, san_value, result_msg, loss, new_san
 
-def get_temporary_insanity(phobias: dict, manias: dict):
-    """
-    随机生成临时疯狂症状，返回症状文本。
-    phobias, manias: 恐惧症和躁狂症字典
-    """
-    # 从配置文件中获取临时疯狂症状类型列表
-    temporary_insanity_types = get_insanity_types("temporary_insanity_types")
+def format_san_result(chara_data, roll_result, san_value, result_msg, loss, new_san):
+    kwargs = dict(name=chara_data["name"], roll_result=roll_result,
+                  san_value=san_value, result_msg=result_msg, loss=loss, new_san=new_san)
+    if new_san == 0:
+        return get_output("san.check_result.zero", **kwargs)
+    if loss == 0:
+        return get_output("san.check_result.no_loss", **kwargs)
+    if loss < 5:
+        return get_output("san.check_result.loss", **kwargs)
+    return get_output("san.check_result.great_loss", **kwargs)
 
-    if not temporary_insanity_types:
-        # 如果配置中没有，返回默认文本
-        return "临时疯狂: 配置文件中未找到临时疯狂症状类型"
+def _get_insanity(phobias, manias, kind):
+    types = get_insanity_types(f"{kind}_insanity_types")
+    if not types:
+        return f"{'临时' if kind == 'temporary' else '长期'}疯狂: 配置文件中未找到症状类型"
 
-    # 从配置获取疯狂症状骰子配置
     insanity_dice = get_config("sanity.insanity_dice.dice", "1D10")
     insanity_min = get_config("sanity.insanity_dice.min", 1)
     insanity_max = get_config("sanity.insanity_dice.max", 10)
     phobia_mania_min = get_config("sanity.phobia_mania_range.min", 1)
     phobia_mania_max = get_config("sanity.phobia_mania_range.max", 100)
 
-    # 随机选择一个症状
-    roll = random.randint(1, len(temporary_insanity_types))
-    result = temporary_insanity_types[roll - 1].replace(insanity_dice, str(random.randint(insanity_min, insanity_max)))
+    roll = random.randint(1, len(types))
+    result = types[roll - 1].replace(insanity_dice, str(random.randint(insanity_min, insanity_max)))
 
     if roll == 9:
         fear_roll = random.randint(phobia_mania_min, phobia_mania_max)
@@ -104,33 +100,8 @@ def get_temporary_insanity(phobias: dict, manias: dict):
         result += f"\n→ 具体躁狂症：{manias[str(mania_roll)]}（骰值 {mania_roll}）"
     return result
 
-def get_long_term_insanity(phobias: dict, manias: dict):
-    """
-    随机生成长期疯狂症状，返回症状文本。
-    phobias, manias: 恐惧症和躁狂症字典
-    """
-    # 从配置文件中获取长期疯狂症状类型列表
-    long_term_insanity_types = get_insanity_types("long_term_insanity_types")
+def get_temporary_insanity(phobias, manias):
+    return _get_insanity(phobias, manias, "temporary")
 
-    if not long_term_insanity_types:
-        # 如果配置中没有，返回默认文本
-        return "长期疯狂: 配置文件中未找到长期疯狂症状类型"
-
-    # 从配置获取疯狂症状骰子配置
-    insanity_dice = get_config("sanity.insanity_dice.dice", "1D10")
-    insanity_min = get_config("sanity.insanity_dice.min", 1)
-    insanity_max = get_config("sanity.insanity_dice.max", 10)
-    phobia_mania_min = get_config("sanity.phobia_mania_range.min", 1)
-    phobia_mania_max = get_config("sanity.phobia_mania_range.max", 100)
-
-    # 随机选择一个症状
-    roll = random.randint(1, len(long_term_insanity_types))
-    result = long_term_insanity_types[roll - 1].replace(insanity_dice, str(random.randint(insanity_min, insanity_max)))
-
-    if roll == 9:
-        fear_roll = random.randint(phobia_mania_min, phobia_mania_max)
-        result += f"\n→ 具体恐惧症：{phobias[str(fear_roll)]}（骰值 {fear_roll}）"
-    if roll == 10:
-        mania_roll = random.randint(phobia_mania_min, phobia_mania_max)
-        result += f"\n→ 具体躁狂症：{manias[str(mania_roll)]}（骰值 {mania_roll}）"
-    return result
+def get_long_term_insanity(phobias, manias):
+    return _get_insanity(phobias, manias, "long_term")
