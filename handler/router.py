@@ -14,10 +14,14 @@ NOTICE_FRIEND_RECALL = "friend_recall"
 
 class RouterMixin:
 
-    @filter.platform_adapter_type(filter.PlatformAdapterType.AIOCQHTTP)
-    @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
+    @event_message_type(EventMessageType.ALL, priority=100)
     async def handle_recall_event(self, event: AstrMessageEvent):
         """监听撤回事件，从日志中移除撤回的消息"""
+        # 运行时检查平台类型（兼容旧版astrbot）
+        platform = event.get_platform_name() if hasattr(event, 'get_platform_name') else ""
+        if platform and platform.lower() not in ("aiocqhttp", "qq", ""):
+            return
+            
         try:
             raw = getattr(event.message_obj, "raw_message", None)
             if not raw:
