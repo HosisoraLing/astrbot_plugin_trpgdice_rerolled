@@ -101,11 +101,12 @@ def roll_dnd_character():
     return [roll_4d6_drop_lowest() for _ in range(attributes_count)]
 
 def format_dnd_character(data, index=1):
-    """
-    格式化DND角色属性输出。
-    """
     data = sorted(data, reverse=True)
     return (
         f"第 {index} 位冒险者\n"
         f"[{data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]}] → 共计 {sum(data)}"
     )
+
+def generate_characters(roll_fn, format_fn, count=1):
+    chars = [roll_fn() for _ in range(count)]
+    return "\n\n".join(format_fn(c, index=i+1) for i, c in enumerate(chars))

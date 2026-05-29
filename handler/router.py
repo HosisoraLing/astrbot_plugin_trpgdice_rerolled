@@ -1,6 +1,4 @@
 import re
-import random
-import time
 
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.all import *
@@ -74,8 +72,6 @@ class RouterMixin:
                 message_id=message_id
             )
         # ----------------------------------------------------
-
-        random.seed(int(time.time() * 1000))
 
         if not any(message.startswith(prefix) for prefix in self.wakeup_prefix):
             return
