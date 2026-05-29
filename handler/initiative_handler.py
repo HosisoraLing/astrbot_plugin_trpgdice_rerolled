@@ -57,15 +57,14 @@ class InitiativeMixin:
         return init_list[group_id][current_index[group_id]]
 
     def format_list(self, group_id: str) -> str:
-        """格式化先攻表输出"""
         try:
             fl = init_list[group_id]
         except KeyError:
             init_list[group_id] = []
-            return "先攻列表为空"
+            return get_output("initiative.empty")
 
         if not fl:
-            return "先攻列表为空"
+            return get_output("initiative.empty")
 
         lines = []
         for i, item in enumerate(fl):
