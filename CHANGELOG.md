@@ -30,7 +30,7 @@
 #### LLM 美化模式
 
 - 新增 `llm_mode` 配置节（启用开关、模型 ID、系统提示词）
-- 所有掷骰相关指令（`.r` `.rv` `.rh` `.ra` `.rap` `.rab` `.sc` `.ti` `.li` `.en` `.coc` `.dnd` `.fireball` `.jrrp` `.ri`）均支持 LLM 美化输出
+- 所有掷骰相关指令（`.r` `.rh` `.ra` `.rap` `.rab` `.sc` `.ti` `.li` `.en` `.coc` `.dnd` `.fireball` `.jrrp` `.ri`）均支持 LLM 美化输出
 - 关闭时与原有模板输出完全一致，LLM provider 不可用时自动降级，不影响正常使用
 
 #### LLM 工具函数（Function Calling）
@@ -139,7 +139,7 @@
 - `default_faces: 100` - 默认骰子面数（支持滑块 1-100）
 - `max_count: 100` - 最大骰子个数（支持滑块 1-1000）
 - `max_faces: 1000` - 最大骰子面数（支持滑块 10-10000）
-- `vampire_default_difficulty: 6` - 吸血鬼骰默认难度（支持滑块 1-10）
+- `max_repeat: 20` - 连续掷骰最大次数（支持滑块 1-100）
 
 #### character (7 项)
 - `coc_three_d6_multiplier: 5` - 3d6 的倍数
@@ -310,7 +310,6 @@ data/config/astrbot_plugin_TRPG_config.json (配置存储)
 - 技能检定与对抗检定
 - 自定义别名支持
 - COC理智检定（带疯狂判定）
-- 吸血鬼规则掷骰
 - 自定义输出风格（通过config.yaml）
 - 基础日志记录框架
 
