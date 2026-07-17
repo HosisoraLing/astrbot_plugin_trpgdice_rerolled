@@ -1,7 +1,7 @@
 import re
 import random
 
-from astrbot.api.event import filter, AstrMessageEvent
+from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component.output import get_output, get_config
 
@@ -57,14 +57,15 @@ class InitiativeMixin:
         return init_list[group_id][current_index[group_id]]
 
     def format_list(self, group_id: str) -> str:
+        """格式化先攻表输出"""
         try:
             fl = init_list[group_id]
         except KeyError:
             init_list[group_id] = []
-            return get_output("initiative.empty")
+            return "先攻列表为空"
 
         if not fl:
-            return get_output("initiative.empty")
+            return "先攻列表为空"
 
         lines = []
         for i, item in enumerate(fl):

@@ -1,13 +1,13 @@
 import time
 
-from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
-from astrbot.api.all import *
 from astrbot.api import AstrBotConfig
+
+from .component.astrbot_compat import filter, AstrMessageEvent
 
 from .component import dice as dice_mod
 from .component.output import get_output, get_config, set_config
-from .component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character, generate_characters
+from .component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character
 from .component.rules import modify_coc_great_sf_rule_command
 from .component.log import JSONLoggerCore
 
@@ -62,17 +62,6 @@ class DicePlugin(
             isDice=True
         )
 
-    async def _reply_to_group(self, event: AstrMessageEvent, text: str):
-        await self.save_log(group_id=event.get_group_id(), content=text)
-        await event.bot.api.call_action("send_group_msg", **{
-            "group_id": event.get_group_id(),
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": event.get_sender_id()}},
-                {"type": "text", "data": {"text": "\n" + text}}
-            ]
-        })
-
     async def _beautify(self, raw_text: str, event: AstrMessageEvent) -> str:
         """若 LLM 模式已启用，将原始结果文本交给 LLM 美化后返回；否则原样返回。"""
         if not get_config("llm_mode.enabled", False):
@@ -97,15 +86,21 @@ class DicePlugin(
 
     @filter.command("coc")
     async def generate_coc_character(self, event: AstrMessageEvent, x: int = 1):
-        text = generate_characters(roll_character, format_character, x)
-        text = get_output("character_list.coc", characters=text)
+        characters = [roll_character() for _ in range(x)]
+        results = []
+        for i, char in enumerate(characters):
+            results.append(format_character(char, index=i+1))
+        text = get_output("character_list.coc", characters="\n\n".join(results))
         text = await self._beautify(text, event)
         yield event.plain_result(text)
 
     @filter.command("dnd")
     async def generate_dnd_character(self, event: AstrMessageEvent, x: int = 1):
-        text = generate_characters(roll_dnd_character, format_dnd_character, x)
-        text = get_output("character_list.dnd", characters=text)
+        characters = [roll_dnd_character() for _ in range(x)]
+        results = []
+        for i, char in enumerate(characters):
+            results.append(format_dnd_character(char, index=i+1))
+        text = get_output("character_list.dnd", characters="\n\n".join(results))
         text = await self._beautify(text, event)
         yield event.plain_result(text)
 

@@ -1,4 +1,4 @@
-from astrbot.api.event import filter, AstrMessageEvent
+from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component.output import get_output
 
