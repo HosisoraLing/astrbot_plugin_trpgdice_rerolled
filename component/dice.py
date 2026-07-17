@@ -334,6 +334,39 @@ def fireball(ring: int = 3):
     )
 
 
+# 运势等级映射：按 COC 大成功/成功/失败/大失败逻辑映射到大吉~大凶
+# 大成功 ~5% (1-5)，极难 ~10% (6-15)，困难 ~15% (16-30)
+# 普通成功 ~25% (31-55)，接近失败 ~25% (56-80)
+# 凶 ~15% (81-95)，大失败 ~5% (96-100)
+FORTUNE_LEVELS = [
+    (5, "大吉"),
+    (15, "吉"),
+    (30, "中吉"),
+    (55, "小吉"),
+    (80, "末吉"),
+    (95, "凶"),
+    (100, "大凶"),
+]
+
+FORTUNE_REPLIES = {
+    "大吉": "今天的运势极佳！做什么都会很顺利，是抽卡、跑团、告白的好日子！🍀",
+    "吉": "运势相当不错~ 事情大多会朝着好的方向发展，保持信心吧！✨",
+    "中吉": "运势中等偏上，虽然不会事事顺遂，但努力就会有回报哦~",
+    "小吉": "平平淡淡才是真，今天适合稳扎稳打，不宜冒进。😊",
+    "末吉": "运势稍低，可能会遇到一些小麻烦，小心为上，别太勉强自己~",
+    "凶": "今天运气不太好呢...尽量避免重要决策，低调度过吧。💦",
+    "大凶": "大凶之兆！今天请务必谨慎行事，或许宅在家里是最好的选择...😱",
+}
+
+
+def _get_fortune(rp: int):
+    """根据 rp 值 (1-100) 获取运势等级和对应回复。"""
+    for threshold, level in FORTUNE_LEVELS:
+        if rp <= threshold:
+            return level, FORTUNE_REPLIES[level]
+    return "末吉", FORTUNE_REPLIES["末吉"]  # fallback
+
+
 def roll_RP(user_id: str):
     """今日RP（运势），返回字符串。"""
     max_rp = get_config("dice.rp.max_value", 100)
@@ -341,4 +374,5 @@ def roll_RP(user_id: str):
     RP_str = f"{user_id}_{today}"
     hash = hashlib.sha256(RP_str.encode()).hexdigest()
     rp = int(hash, 16) % max_rp + 1
-    return get_output("rp.today", rp=rp)
+    fortune, reply = _get_fortune(rp)
+    return get_output("rp.today", rp=rp, fortune=fortune, reply=reply)

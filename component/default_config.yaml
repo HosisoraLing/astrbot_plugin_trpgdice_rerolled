@@ -15,7 +15,7 @@ output:
 
   # ---------- 运势 ----------
   rp:
-    today: "{name}今日的运势是: {rp}/100 哦~"
+    today: "{name}今日的运势指数是 {rp}/100，评级为【{fortune}】\n{reply}"
 
   # ---------- 火球术 ----------
   fireball:

@@ -75,9 +75,9 @@
         "type": "object",
         "items": {
           "today": {
-            "description": "运势查询 (变量: rp)",
+            "description": "运势查询 (变量: rp, fortune, reply)",
             "type": "text",
-            "default": "今日的运势是: {rp}/100 哦~"
+            "default": "今日的运势指数是 {rp}/100，评级为【{fortune}】\n{reply}"
           }
         }
       },
