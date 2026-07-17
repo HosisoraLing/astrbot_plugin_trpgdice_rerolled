@@ -1,6 +1,11 @@
-from astrbot.api import logger
+"""
+COC 相关命令处理 Mixin（技能检定、理智检定、疯狂症状、技能成长）。
 
-from ..component.astrbot_compat import AstrMessageEvent
+注意：@filter.command 装饰器不会被 AstrBot 调度（原因同 dice_handler.py），
+实际命令路由见 handler/router.py。
+"""
+
+from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component import character as charmod
 from ..component import dice as dice_mod
@@ -11,7 +16,8 @@ from ..component.utils import get_sender_nickname
 
 class CoCMixin:
 
-    async def roll_attribute(self, event: AstrMessageEvent, skill_name: str, skill_value: str = None):
+    @filter.command("ra")
+    async def roll_attribute(self, event: AstrMessageEvent, skill_name: str = "", skill_value: str = None):
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
         name = event.get_sender_name()
@@ -21,8 +27,6 @@ class CoCMixin:
 
         client = event.bot
         ret = await get_sender_nickname(client, group_id, user_id)
-
-        logger.info(ret)
 
         ret = event.get_sender_name() if ret == "" else ret
         result_message = dice_mod.roll_attribute(skill_name, skill_value, str(group_id), ret)
@@ -39,6 +43,19 @@ class CoCMixin:
         await client.api.call_action("send_group_msg", **payloads)
 
     # 惩罚骰技能判定
+    @filter.command("rap")
+    async def cmd_rap(self, event: AstrMessageEvent, arg1: str = "", arg2: str = "", arg3: str = ""):
+        """惩罚骰技能判定 (.rap 1 侦查 50 或 .rap 侦查 50)"""
+        if arg1.isdigit():
+            dice_count = arg1
+            skill_name = arg2
+            skill_value = arg3 if arg3 else None
+        else:
+            dice_count = "1"
+            skill_name = arg1
+            skill_value = arg2 if arg2 else None
+        await self.roll_attribute_penalty(event, dice_count, skill_name, skill_value)
+
     async def roll_attribute_penalty(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None):
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
@@ -63,6 +80,19 @@ class CoCMixin:
         await client.api.call_action("send_group_msg", **payloads)
 
     # 奖励骰技能判定
+    @filter.command("rab")
+    async def cmd_rab(self, event: AstrMessageEvent, arg1: str = "", arg2: str = "", arg3: str = ""):
+        """奖励骰技能判定 (.rab 1 侦查 50 或 .rab 侦查 50)"""
+        if arg1.isdigit():
+            dice_count = arg1
+            skill_name = arg2
+            skill_value = arg3 if arg3 else None
+        else:
+            dice_count = "1"
+            skill_name = arg1
+            skill_value = arg2 if arg2 else None
+        await self.roll_attribute_bonus(event, dice_count, skill_name, skill_value)
+
     async def roll_attribute_bonus(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None):
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
@@ -86,7 +116,12 @@ class CoCMixin:
         await self.save_log(group_id=event.get_group_id(), content=result_message)
         await client.api.call_action("send_group_msg", **payloads)
 
-    # @filter.command("en")
+    @filter.command("en")
+    async def cmd_en(self, event: AstrMessageEvent, skill_name: str = "", skill_value: str = ""):
+        """技能成长判定 (.en 侦查 50)"""
+        skill_value = skill_value if skill_value else None
+        await self.pc_grow_up(event, skill_name, skill_value)
+
     async def pc_grow_up(self, event: AstrMessageEvent, skill_name: str, skill_value: str = None):
         """
         .en 技能成长判定
@@ -110,7 +145,12 @@ class CoCMixin:
         await client.api.call_action("send_group_msg", **payloads)
 
     # san check
-    # @filter.command("sc")
+    @filter.command("sc")
+    async def cmd_sc(self, event: AstrMessageEvent, loss_formula: str = "1d6/1d10"):
+        """理智检定"""
+        async for result in self.pc_san_check(event, loss_formula):
+            yield result
+
     async def pc_san_check(self, event: AstrMessageEvent, loss_formula: str):
         """理智检定"""
         user_id = event.get_sender_id()
@@ -182,6 +222,7 @@ class CoCMixin:
         await self.save_log(group_id=event.get_group_id(), content=text)
         await client.api.call_action("send_group_msg", **payloads)
 
+    @filter.command("ti")
     async def pc_temporary_insanity(self, event: AstrMessageEvent):
         """临时疯狂"""
         result = sanity.get_temporary_insanity(sanity.phobias, sanity.manias)
@@ -190,6 +231,7 @@ class CoCMixin:
         await self.save_log(group_id=event.get_group_id(), content=text)
         yield event.plain_result(text)
 
+    @filter.command("li")
     async def pc_long_term_insanity(self, event: AstrMessageEvent):
         """长期疯狂"""
         result = sanity.get_long_term_insanity(sanity.phobias, sanity.manias)

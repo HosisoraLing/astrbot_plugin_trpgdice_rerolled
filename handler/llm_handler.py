@@ -1,3 +1,11 @@
+"""
+LLM 工具函数 Mixin。
+
+注册为 AstrBot Function Calling 工具，LLM 可主动调用掷骰、技能检定等功能。
+同时提供模板修改和美化模式开关的 LLM 工具。
+@filter.llm_tool 装饰器独立于 @event_message_type 调度链，正常工作。
+"""
+
 import re
 from typing import Optional
 

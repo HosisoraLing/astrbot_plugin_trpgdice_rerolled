@@ -670,6 +670,26 @@
             "type": "text",
             "default": "尚无任何日志记录。"
           },
+          "no_session_data": {
+            "description": "无会话数据",
+            "type": "text",
+            "default": "没有可统计的日志数据。"
+          },
+          "stat_header": {
+            "description": "统计表头",
+            "type": "text",
+            "default": "═══ 日志统计 ═══"
+          },
+          "stat_line": {
+            "description": "统计行 (变量: session_name, message_count, dice_count, user_count, duration)",
+            "type": "text",
+            "default": "▸ {session_name} · {message_count}条消息 · {dice_count}次掷骰 · {user_count}人参与 · {duration}"
+          },
+          "stat_total": {
+            "description": "统计汇总 (变量: session_count, total_messages, total_dice, total_users)",
+            "type": "text",
+            "default": "═══ 共 {session_count} 个日志 · {total_messages}条消息 · {total_dice}次掷骰 · {total_users}人参与 ═══"
+          },
           "session_deleted": {
             "description": "会话删除 (变量: session_name)",
             "type": "text",
@@ -736,23 +756,43 @@
         "description": "奖励/惩罚骰配置",
         "type": "object",
         "items": {
-          "dice_count": { "description": "骰子个数", "type": "int", "default": 1 },
-          "base_faces": { "description": "基础面数", "type": "int", "default": 100 }
+          "dice_count": {
+            "description": "骰子个数",
+            "type": "int",
+            "default": 1
+          },
+          "base_faces": {
+            "description": "基础面数",
+            "type": "int",
+            "default": 100
+          }
         }
       },
       "fireball": {
         "description": "火球术配置",
         "type": "object",
         "items": {
-          "base_dice": { "description": "基础骰子数 (3环)", "type": "int", "default": 8 },
-          "dice_per_ring": { "description": "每升一环增加骰子数", "type": "int", "default": 1 }
+          "base_dice": {
+            "description": "基础骰子数 (3环)",
+            "type": "int",
+            "default": 8
+          },
+          "dice_per_ring": {
+            "description": "每升一环增加骰子数",
+            "type": "int",
+            "default": 1
+          }
         }
       },
       "rp": {
         "description": "运势配置",
         "type": "object",
         "items": {
-          "max_value": { "description": "运势最大值", "type": "int", "default": 100 }
+          "max_value": {
+            "description": "运势最大值",
+            "type": "int",
+            "default": 100
+          }
         }
       }
     }
@@ -789,7 +829,11 @@
         "description": "疯狂症状骰子配置",
         "type": "object",
         "items": {
-          "dice": { "description": "骰子表达式 (用于文本替换)", "type": "string", "default": "1D10" },
+          "dice": {
+            "description": "骰子表达式 (用于文本替换)",
+            "type": "string",
+            "default": "1D10"
+          },
           "min": { "description": "骰子最小值", "type": "int", "default": 1 },
           "max": { "description": "骰子最大值", "type": "int", "default": 10 }
         }
@@ -821,19 +865,47 @@
                 "description": "3d6属性 (力量/体质/敏捷/外貌/意志)",
                 "type": "object",
                 "items": {
-                  "dice_count": { "description": "骰子个数", "type": "int", "default": 3 },
-                  "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
-                  "multiplier": { "description": "倍数", "type": "int", "default": 5 }
+                  "dice_count": {
+                    "description": "骰子个数",
+                    "type": "int",
+                    "default": 3
+                  },
+                  "dice_faces": {
+                    "description": "骰子面数",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "multiplier": {
+                    "description": "倍数",
+                    "type": "int",
+                    "default": 5
+                  }
                 }
               },
               "two_d6_plus_6": {
                 "description": "2d6+6属性 (体型/智力/教育)",
                 "type": "object",
                 "items": {
-                  "dice_count": { "description": "骰子个数", "type": "int", "default": 2 },
-                  "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
-                  "bonus": { "description": "加值", "type": "int", "default": 6 },
-                  "multiplier": { "description": "倍数", "type": "int", "default": 5 }
+                  "dice_count": {
+                    "description": "骰子个数",
+                    "type": "int",
+                    "default": 2
+                  },
+                  "dice_faces": {
+                    "description": "骰子面数",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "bonus": {
+                    "description": "加值",
+                    "type": "int",
+                    "default": 6
+                  },
+                  "multiplier": {
+                    "description": "倍数",
+                    "type": "int",
+                    "default": 5
+                  }
                 }
               }
             }
@@ -842,9 +914,21 @@
             "description": "幸运骰",
             "type": "object",
             "items": {
-              "dice_count": { "description": "骰子个数", "type": "int", "default": 3 },
-              "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
-              "multiplier": { "description": "倍数", "type": "int", "default": 5 }
+              "dice_count": {
+                "description": "骰子个数",
+                "type": "int",
+                "default": 3
+              },
+              "dice_faces": {
+                "description": "骰子面数",
+                "type": "int",
+                "default": 6
+              },
+              "multiplier": {
+                "description": "倍数",
+                "type": "int",
+                "default": 5
+              }
             }
           }
         }
@@ -857,12 +941,28 @@
             "description": "DND骰子公式 (默认 4d6去最低)",
             "type": "object",
             "items": {
-              "dice_count": { "description": "骰子个数", "type": "int", "default": 4 },
-              "dice_faces": { "description": "骰子面数", "type": "int", "default": 6 },
-              "drop_lowest": { "description": "去最低个数", "type": "int", "default": 1 }
+              "dice_count": {
+                "description": "骰子个数",
+                "type": "int",
+                "default": 4
+              },
+              "dice_faces": {
+                "description": "骰子面数",
+                "type": "int",
+                "default": 6
+              },
+              "drop_lowest": {
+                "description": "去最低个数",
+                "type": "int",
+                "default": 1
+              }
             }
           },
-          "attributes_count": { "description": "属性个数", "type": "int", "default": 6 }
+          "attributes_count": {
+            "description": "属性个数",
+            "type": "int",
+            "default": 6
+          }
         }
       }
     }

@@ -6,6 +6,61 @@
 
 ---
 
+## [1.4.0] - 2026-07-17
+
+### 🔧 架构重构
+
+#### 命令路由集中化
+
+- **所有命令路由统一迁移至 `RouterMixin.identify_command()`**
+  - 原因：AstrBot 中 `@event_message_type` 和 `@filter.command` 是互斥的调度链——注册前者后后者永远不会被调用
+  - 这意味着 v1.3.0 中大部分 `@filter.command` 装饰的命令（`.coc` `.dnd` `.fireball` `.jrrp` `.setcoc` `.dicehelp` `.st` `.sn` `.pc` `.init` `.ed` `.log`）实际上从未工作过
+  - 现所有命令（包括 `pc` / `log` 子命令）均通过 `identify_command()` 统一路由
+- **修复异步生成器混用问题**
+  - 原 `identify_command` 中 `await` 和 `yield` 混用导致整个函数变成异步生成器，部分分支无法正确执行
+  - 重构后每个命令分支明确使用 `await`（API 直接发送）或 `async for ... yield`（委托给子方法）
+- **修复多词命令空格剔除 Bug**
+  - 原 `re.sub(r'\s+', '', ...)` 将 `.pc list` → `pclist`、`.log new` → `lognew`，导致 `cmd == "pc"` 永远为 False
+  - 改为从原始消息（保留空格）提取命令词，空格剔除版仅用于 `ra/en/rd/r` 的数值解析
+
+### 🐛 Bug 修复
+
+- **修复 `.ra` 首次调用崩溃** - `coc_rule_init()` 仅在 `.setcoc` 中调用，`.ra` 首次执行时 SQLite `GroupRule` 表不存在。现 `set_great_sf_rule()` / `get_great_sf_rule()` 内部自动调用 `coc_rule_init()`
+- **修复 `.log stat` 崩溃** - `JSONLoggerCore` 缺少 `stat_sessions()` 方法，已实现完整统计逻辑
+- **清理调试日志残留** - 移除 `coc_handler.py` 和 `character_handler.py` 中的 `logger.info()` 调用
+
+### ✨ 新增功能
+
+#### 参数校验与错误提示
+
+- `.ra` / `.rab` / `.rap` / `.en` 缺少技能名时显示用法提示
+- `.st` 缺少参数时显示用法提示
+- `.fireball` 非法环位时显示用法提示
+- `.pc create` / `.pc change` / `.pc update` / `.pc delete` 缺少必填参数时显示用法提示
+- `.pc` 无子命令时显示子命令列表
+- `.log del` / `.log get` 缺少日志名时显示用法提示
+- `.log` 无子命令时显示子命令列表
+
+#### 日志统计
+
+- 新增 `.log stat <日志名>` - 查看指定日志的消息数、掷骰数、参与人数、时长
+- 新增 `.log stat --all` - 查看全部日志的汇总统计
+
+### 📝 代码整理
+
+- 所有 handler 模块添加 docstring，说明职责和 AstrBot 调度架构
+- 标注 `@filter.command` 装饰器在当前架构下为死代码（保留作为文档和向前兼容）
+- `main.py` 添加模块 docstring，Bot 昵称硬编码处添加 TODO 标注
+
+### 🔧 新增配置模板
+
+- `log.no_session_data` - 无会话数据
+- `log.stat_header` - 统计表头
+- `log.stat_line` - 统计行（变量: session_name, message_count, dice_count, user_count, duration）
+- `log.stat_total` - 统计汇总（变量: session_count, total_messages, total_dice, total_users）
+
+---
+
 ## [1.3.0] - 2026-05-20
 
 ### ✨ 新增功能

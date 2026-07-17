@@ -1,8 +1,13 @@
+"""
+人物卡管理 Mixin。
+
+提供 COC/D&D 人物卡的创建、显示、切换、更新、删除以及群名片同步。
+@filter.command 装饰器不会被 AstrBot 调度，实际路由见 handler/router.py。
+"""
+
 import re
 import random
 from typing import Optional
-
-from astrbot.api import logger
 
 from ..component.astrbot_compat import filter, AstrMessageEvent, command_group
 
@@ -38,8 +43,6 @@ class CharacterMixin:
         attribute = match.group(1)
         operator = match.group(2) if match.group(2) else None
         value_expr = match.group(3) if match.group(3) else None
-
-        logger.info(f"{attributes_clean}")
 
         if attribute not in chara_data["attributes"]:
             yield event.plain_result(get_output("pc.show.attr_missing", attribute=attribute))

@@ -1,3 +1,10 @@
+"""
+星星骰娘-重骰版！AstrBot TRPG 骰子插件主模块。
+
+架构：DicePlugin 通过多重继承组合各 Mixin 的功能模块。
+命令路由集中在 handler/router.py 的 RouterMixin.identify_command() 中处理。
+"""
+
 import time
 
 from astrbot.api.star import Context, Star, register
@@ -53,6 +60,7 @@ class DicePlugin(
         super().__init__(context)
 
     async def save_log(self, group_id, content):
+        # TODO: 昵称应从配置读取，当前硬编码为 "风铃Velinithra"
         await self.logger_core.add_message(
             group_id=group_id,
             user_id="Bot",

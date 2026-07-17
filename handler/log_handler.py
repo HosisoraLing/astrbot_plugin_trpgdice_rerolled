@@ -1,3 +1,10 @@
+"""
+日志管理 Mixin。
+
+提供跑团日志的创建、暂停、恢复、结束、导出、删除和统计功能。
+@filter.command_group 装饰器不会被 AstrBot 调度，实际路由见 handler/router.py。
+"""
+
 from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component.output import get_output

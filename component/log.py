@@ -290,6 +290,62 @@ class JSONLoggerCore:
             )
         return lines
 
+    async def stat_sessions(self, group_id: str, name: Optional[str] = None, all_flag: bool = False) -> List[str]:
+        """获取日志会话统计信息"""
+        grp = await self.load_group(group_id)
+
+        target_sessions = {}
+        if name and not all_flag:
+            sec = grp.get(name)
+            if not sec:
+                return [get_output("log.session_not_found", session_name=name)]
+            target_sessions[name] = sec
+        else:
+            target_sessions = grp
+
+        if not target_sessions:
+            return [get_output("log.no_session_data")]
+
+        lines = [get_output("log.stat_header")]
+        total_messages = 0
+        total_dice = 0
+        total_users = set()
+
+        for session_name, sec in target_sessions.items():
+            msgs = sec.get("messages", [])
+            msg_count = len(msgs)
+            dice_count = sum(1 for m in msgs if m.get("isDice"))
+            users = set(m.get("user_id") for m in msgs)
+            duration_str = "进行中"
+            if sec.get("start_time") and sec.get("end_time"):
+                duration = sec["end_time"] - sec["start_time"]
+                m, s = divmod(duration, 60)
+                h, m = divmod(m, 60)
+                duration_str = f"{h}时{m}分{s}秒" if h else f"{m}分{s}秒"
+
+            lines.append(
+                get_output("log.stat_line",
+                    session_name=session_name,
+                    message_count=msg_count,
+                    dice_count=dice_count,
+                    user_count=len(users),
+                    duration=duration_str
+                )
+            )
+            total_messages += msg_count
+            total_dice += dice_count
+            total_users.update(users)
+
+        lines.append(
+            get_output("log.stat_total",
+                session_count=len(target_sessions),
+                total_messages=total_messages,
+                total_dice=total_dice,
+                total_users=len(total_users)
+            )
+        )
+        return lines
+
     async def delete_session(self, group_id: str, name: str) -> Tuple[bool, str]:
         grp = await self.load_group(group_id)
 
