@@ -44,3 +44,6 @@ data/cocrule.db
 data/plugin_overrides.json
 V20_char_sheet/char_sheet.db
 .log
+
+#Plugin data
+chara_data
