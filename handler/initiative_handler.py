@@ -1,7 +1,14 @@
+"""
+先攻系统 Mixin。
+
+管理 D&D 风格先攻列表：掷先攻、排序、回合推进。
+@filter.command 装饰器不会被 AstrBot 调度，实际路由见 handler/router.py。
+"""
+
 import re
 import random
 
-from astrbot.api.event import filter, AstrMessageEvent
+from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component.output import get_output, get_config
 
@@ -57,14 +64,15 @@ class InitiativeMixin:
         return init_list[group_id][current_index[group_id]]
 
     def format_list(self, group_id: str) -> str:
+        """格式化先攻表输出"""
         try:
             fl = init_list[group_id]
         except KeyError:
             init_list[group_id] = []
-            return get_output("initiative.empty")
+            return "先攻列表为空"
 
         if not fl:
-            return get_output("initiative.empty")
+            return "先攻列表为空"
 
         lines = []
         for i, item in enumerate(fl):
@@ -88,7 +96,13 @@ class InitiativeMixin:
             self.remove_by_name(player_name, group_id)
             yield event.plain_result(get_output("initiative.deleted", player_name=player_name))
 
-    # @filter.command("ri")
+    @filter.command("ri")
+    async def cmd_ri(self, event: AstrMessageEvent, expr: str = "", player_name: str = ""):
+        """先攻掷骰 (.ri [+/-]n [角色名])"""
+        expr = f"{expr} {player_name}".strip() if player_name else expr.strip()
+        async for result in self.roll_initiative(event, expr if expr else None):
+            yield result
+
     async def roll_initiative(self, event: AstrMessageEvent, expr: str = None):
 
         group_id = event.get_group_id()

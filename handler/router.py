@@ -1,7 +1,18 @@
-import re
+"""
+消息路由与日志收集模块。
 
-from astrbot.api.event import AstrMessageEvent
-from astrbot.api.all import *
+架构说明：
+  AstrBot 中 @event_message_type 和 @filter.command 是互斥的调度链——
+  一旦插件注册了 @event_message_type 处理器，@filter.command 就不会被调度。
+  因此本插件将所有命令路由集中在 identify_command() 中处理，
+  各 Mixin 类上的 @filter.command 装饰器仅作文档标注，不影响实际路由。
+"""
+
+import re
+import random
+import time
+
+from ..component.astrbot_compat import AstrMessageEvent, filter, event_message_type, EventMessageType
 
 from ..component.output import get_config
 
@@ -12,14 +23,10 @@ NOTICE_FRIEND_RECALL = "friend_recall"
 
 class RouterMixin:
 
-    @event_message_type(EventMessageType.ALL, priority=100)
+    @filter.platform_adapter_type(filter.PlatformAdapterType.AIOCQHTTP)
+    @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
     async def handle_recall_event(self, event: AstrMessageEvent):
         """监听撤回事件，从日志中移除撤回的消息"""
-        # 运行时检查平台类型（兼容旧版astrbot）
-        platform = event.get_platform_name() if hasattr(event, 'get_platform_name') else ""
-        if platform and platform.lower() not in ("aiocqhttp", "qq", ""):
-            return
-            
         try:
             raw = getattr(event.message_obj, "raw_message", None)
             if not raw:
@@ -45,13 +52,12 @@ class RouterMixin:
         except Exception as e:
             print(f"[TRPGDice] 处理撤回事件出错: {e}")
 
-    # 识别所有信息
+    # 日志收集 + 全部命令路由（@event_message_type 在 AstrBot 中会先于 @filter.command 消费事件）
     @event_message_type(EventMessageType.GROUP_MESSAGE)
     async def identify_command(self, event: AstrMessageEvent):
-
         message = event.message_obj.message_str
 
-         # ------------------- 日志收集逻辑 -------------------
+        # ------------------- 日志收集 -------------------
         group_id = event.message_obj.group_id
 
         if group_id:
@@ -61,7 +67,6 @@ class RouterMixin:
             components = getattr(event.message_obj, "message", [])
             message_id = getattr(event.message_obj, "message_id", None)
 
-            # 调用功能性模块添加消息
             await self.logger_core.add_message(
                 group_id=group_id,
                 user_id=user_id,
@@ -73,46 +78,52 @@ class RouterMixin:
             )
         # ----------------------------------------------------
 
+        random.seed(int(time.time() * 1000))
+
         if not any(message.startswith(prefix) for prefix in self.wakeup_prefix):
             return
 
-        message = re.sub(r'\s+', '', message[1:])
+        raw_message = message
 
-        m = re.match(r'^([a-z]+)', message, re.I)
-
-        if not m:
+        # 从原始消息（保留空格）中提取命令词，避免 "pc list" → "pclist" 的合并问题
+        message_after_prefix = message[1:]
+        m_space = re.match(r'^([a-z]+)', message_after_prefix, re.I)
+        if not m_space:
             return
+        cmd = m_space.group(1).lower()
+        expr_raw = message_after_prefix[m_space.end():].strip()
 
-        cmd  = m.group(1).lower() if m else ""
-        expr = message[m.end():].strip()
+        # 空格剔除版，用于 ra/en/rd/r 等复杂表达式的数值提取
+        message = re.sub(r'\s+', '', message_after_prefix)
+        m = re.match(r'^([a-z]+)', message, re.I)
+        expr = message[m.end():].strip() if m else ""
         remark = None
 
         skill_value = ""
         dice_count = "1"
 
+        # ===================== en =====================
         if cmd[0:2] == "en":
             sv_match = re.search(r'\d+$', message)
             if sv_match:
                 skill_value = sv_match.group()
-                expr = message[2:len(message)-len(skill_value)]
-                cmd = "en"
+                expr = message[2:len(message) - len(skill_value)]
             else:
                 skill_value = None
                 expr = message[2:]
-                cmd = "en"
-        if cmd[0:2] == "ra":
+
+        # ===================== ra / rab / rap =====================
+        if cmd[0:2] == "ra" and cmd not in ("rd", "rh"):
             sv_match = re.search(r'\d+$', message)
             if sv_match:
                 skill_value = sv_match.group()
-                expr = message[2:len(message)-len(skill_value)]
-                cmd = "ra"
+                expr = message[2:len(message) - len(skill_value)]
             else:
                 skill_value = None
                 expr = message[2:]
-                cmd = "ra"
 
             if expr and (expr[0] == 'b' or expr[0] == 'p'):
-                cmd = cmd + expr[0]
+                cmd = "ra" + expr[0]
                 expr = expr[1:]
                 dice_count_match = re.search(r'\d+', expr)
                 if dice_count_match:
@@ -123,64 +134,231 @@ class RouterMixin:
 
             if expr.isdigit():
                 skill_value = expr
-
             if not expr and skill_value:
                 expr = skill_value
 
+        # ===================== rd =====================
         elif cmd[0:2] == "rd":
-            raw = message[2:].strip()
-            dice_match = re.match(r'(\d+)', raw)
-
-            # 从配置获取默认骰子面数
+            raw_expr = message[2:].strip()
+            dice_match = re.match(r'(\d+)', raw_expr)
             default_dice = get_config("dice.default_faces", 100)
-
             if dice_match:
                 dice_size = dice_match.group(1)
                 expr = f"1d{dice_size}"
-                remark = raw[(len(dice_size)):].strip()[:100]
+                remark = raw_expr[len(dice_size):].strip()[:100]
             else:
                 expr = f"1d{default_dice}"
-                remark = raw.strip()
+                remark = raw_expr.strip()
 
+        # ===================== r / rh =====================
         elif cmd[0] == "r":
-            # 匹配完整的骰子表达式，支持 N#expr 连续掷骰格式（如 6#4d6k3, 3#2d20+5）
             r_match = re.match(r'(\d+#[0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
             if not r_match:
                 r_match = re.match(r'([0-9]*[dD][0-9]+(?:[kK]\d+)?(?:[+\-*][0-9]+(?:[dD][0-9]+)?)*)', message[1:])
             if r_match:
                 expr = r_match.group(1)
-                remark = message[1+len(expr):].strip()[:100]
+                remark = message[1 + len(expr):].strip()[:100]
             else:
                 expr = message[1:].strip()
-                # 如果没有指定骰子，使用默认骰子
                 if not expr or not re.match(r'(\d*)[dD](\d+)', expr):
                     default_dice = get_config("dice.default_faces", 100)
                     expr = f"1d{default_dice}"
 
+        # ===================== 命令分发 =====================
+        # --- 掷骰 ---
         if cmd == "r":
             await self.handle_roll_dice(event, expr, remark)
         elif cmd == "rd":
             await self.handle_roll_dice(event, expr, remark)
         elif cmd == "rh":
-            async for result in self.roll_hidden(event):
+            async for result in self.roll_hidden(event, expr if expr else None):
                 yield result
-        elif cmd == "rab":
-            await self.roll_attribute_bonus(event, dice_count, expr, skill_value)
-        elif cmd == "rap":
-            await self.roll_attribute_penalty(event, dice_count, expr, skill_value)
+
+        # --- COC 技能 ---
         elif cmd == "ra":
-            await self.roll_attribute(event, expr, skill_value)
+            if not expr_raw:
+                yield event.plain_result("[错误] 用法: .ra 技能名 [技能值]")
+                return
+            await self.roll_attribute(event, expr_raw, skill_value)
+        elif cmd == "rab":
+            if not expr_raw:
+                yield event.plain_result("[错误] 用法: .rab [n] 技能名 [技能值]")
+                return
+            await self.roll_attribute_bonus(event, dice_count, expr_raw, skill_value)
+        elif cmd == "rap":
+            if not expr_raw:
+                yield event.plain_result("[错误] 用法: .rap [n] 技能名 [技能值]")
+                return
+            await self.roll_attribute_penalty(event, dice_count, expr_raw, skill_value)
         elif cmd == "en":
-            await self.pc_grow_up(event, expr, skill_value)
+            if not expr_raw:
+                yield event.plain_result("[错误] 用法: .en 技能名 [技能值]")
+                return
+            await self.pc_grow_up(event, expr_raw, skill_value)
+
+        # --- 理智 ---
         elif cmd == "sc":
-            async for result in self.pc_san_check(event, expr):
-                yield result
-        elif cmd == "li":
-            async for result in self.pc_long_term_insanity(event):
+            async for result in self.pc_san_check(event, expr_raw if expr_raw else "1d6/1d10"):
                 yield result
         elif cmd == "ti":
             async for result in self.pc_temporary_insanity(event):
                 yield result
-        elif cmd == "ri":
-            async for result in self.roll_initiative(event, expr):
+        elif cmd == "li":
+            async for result in self.pc_long_term_insanity(event):
                 yield result
+
+        # --- 先攻 ---
+        elif cmd == "ri":
+            async for result in self.roll_initiative(event, expr_raw if expr_raw else None):
+                yield result
+        elif cmd == "init":
+            sub_expr = expr_raw.lower() if expr_raw else ""
+            if not sub_expr:
+                async for result in self.initiative(event, None, None):
+                    yield result
+            elif sub_expr == "clr":
+                async for result in self.initiative(event, "clr", None):
+                    yield result
+            elif sub_expr.startswith("del"):
+                name = sub_expr[3:].strip() if len(sub_expr) > 3 else ""
+                async for result in self.initiative(event, "del", name if name else None):
+                    yield result
+            else:
+                async for result in self.initiative(event, None, None):
+                    yield result
+        elif cmd == "ed":
+            async for result in self.end_current_round(event):
+                yield result
+
+        # --- 杂项 ---
+        elif cmd == "coc":
+            try:
+                x = int(expr_raw) if expr_raw else 1
+            except ValueError:
+                x = 1
+            async for result in self.generate_coc_character(event, x):
+                yield result
+        elif cmd == "dnd":
+            try:
+                x = int(expr_raw) if expr_raw else 1
+            except ValueError:
+                x = 1
+            async for result in self.generate_dnd_character(event, x):
+                yield result
+        elif cmd == "dicehelp":
+            async for result in self.help(event):
+                yield result
+        elif cmd == "fireball":
+            try:
+                ring = int(expr_raw) if expr_raw else 3
+            except ValueError:
+                yield event.plain_result("[错误] 用法: .fireball [环位] (3-20)")
+                return
+            async for result in self.fireball_cmd(event, ring):
+                yield result
+        elif cmd == "jrrp":
+            async for result in self.roll_RP_cmd(event):
+                yield result
+        elif cmd == "setcoc":
+            async for result in self.setcoc_cmd(event, expr_raw if expr_raw else " "):
+                yield result
+
+        # --- 人物卡属性 ---
+        elif cmd == "st":
+            parts = raw_message[1:].strip().split(maxsplit=1)
+            if len(parts) >= 2:
+                attrs = parts[1]
+                attr_parts = attrs.split(maxsplit=1)
+                async for result in self.status(event, attr_parts[0] if len(attr_parts) >= 1 else "", attr_parts[1] if len(attr_parts) >= 2 else ""):
+                    yield result
+            else:
+                yield event.plain_result("[错误] 用法: .st 属性名[+/-/*]值  (如 .st san+5 或 .st hp+2d6)")
+        elif cmd == "sn":
+            async for result in self.filter_set_nickname(event):
+                yield result
+
+        # --- 人物卡管理 (pc) ---
+        elif cmd == "pc":
+            pc_parts = raw_message[1:].strip().split(maxsplit=2)
+            sub_cmd = pc_parts[1].strip().lower() if len(pc_parts) >= 2 else ""
+            rest = pc_parts[2] if len(pc_parts) >= 3 else ""
+
+            if sub_cmd == "create":
+                rest_parts = rest.split(maxsplit=1)
+                name = rest_parts[0] if rest_parts else None
+                attrs = rest_parts[1] if len(rest_parts) >= 2 else ""
+                if not name:
+                    yield event.plain_result("[错误] 用法: .pc create <名称> [属性值]")
+                    return
+                async for result in self.pc_create_character(event, name, attrs):
+                    yield result
+            elif sub_cmd == "show":
+                attr_name = rest if rest else None
+                async for result in self.pc_show_character(event, attr_name):
+                    yield result
+            elif sub_cmd == "list":
+                async for result in self.pc_list_characters(event):
+                    yield result
+            elif sub_cmd == "change":
+                if not rest:
+                    yield event.plain_result("[错误] 用法: .pc change <名称>")
+                    return
+                async for result in self.pc_change_character(event, rest):
+                    yield result
+            elif sub_cmd == "update":
+                upd_parts = rest.split(maxsplit=1)
+                attr = upd_parts[0] if upd_parts else ""
+                val = upd_parts[1] if len(upd_parts) >= 2 else ""
+                if not attr:
+                    yield event.plain_result("[错误] 用法: .pc update <属性名> <值/公式>")
+                    return
+                async for result in self.pc_update_character(event, attr, val):
+                    yield result
+            elif sub_cmd == "delete":
+                if not rest:
+                    yield event.plain_result("[错误] 用法: .pc delete <名称>")
+                    return
+                async for result in self.pc_delete_character(event, rest):
+                    yield result
+            else:
+                yield event.plain_result("[提示] pc 子命令: create / show / list / change / update / delete")
+
+        # --- 日志管理 (log) ---
+        elif cmd == "log":
+            log_parts = raw_message[1:].strip().split(maxsplit=1)
+            sub_cmd = log_parts[1].strip().lower() if len(log_parts) >= 2 else ""
+
+            if sub_cmd.startswith("new"):
+                async for result in self.cmd_log_new(event):
+                    yield result
+            elif sub_cmd.startswith("end"):
+                async for result in self.cmd_log_end(event):
+                    yield result
+            elif sub_cmd.startswith("off"):
+                async for result in self.cmd_log_off(event):
+                    yield result
+            elif sub_cmd.startswith("on"):
+                async for result in self.cmd_log_on(event):
+                    yield result
+            elif sub_cmd.startswith("list"):
+                async for result in self.cmd_log_list(event):
+                    yield result
+            elif sub_cmd.startswith("del"):
+                parts_check = raw_message[1:].strip().split()
+                if len(parts_check) < 3:
+                    yield event.plain_result("[错误] 用法: .log del <日志名>")
+                    return
+                async for result in self.cmd_log_del(event):
+                    yield result
+            elif sub_cmd.startswith("get"):
+                parts_check = raw_message[1:].strip().split()
+                if len(parts_check) < 3:
+                    yield event.plain_result("[错误] 用法: .log get <日志名>")
+                    return
+                async for result in self.cmd_log_get(event):
+                    yield result
+            elif sub_cmd.startswith("stat"):
+                async for result in self.cmd_log_stat(event):
+                    yield result
+            else:
+                yield event.plain_result("[提示] log 子命令: new / on / off / end / list / del / get / stat")

@@ -1,13 +1,21 @@
+"""
+LLM 工具函数 Mixin。
+
+注册为 AstrBot Function Calling 工具，LLM 可主动调用掷骰、技能检定等功能。
+同时提供模板修改和美化模式开关的 LLM 工具。
+@filter.llm_tool 装饰器独立于 @event_message_type 调度链，正常工作。
+"""
+
 import re
 from typing import Optional
 
-from astrbot.api.event import filter, AstrMessageEvent
+from ..component.astrbot_compat import filter, AstrMessageEvent
 
 from ..component import character as charmod
 from ..component import dice as dice_mod
 from ..component import sanity
 from ..component.output import get_output
-from ..component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character, generate_characters
+from ..component.utils import roll_character, format_character, roll_dnd_character, format_dnd_character
 
 
 class LLMToolsMixin:
@@ -50,7 +58,13 @@ class LLMToolsMixin:
         roll_result, san_value, result_msg, loss, new_san = sanity.san_check(chara_data, loss_formula)
         chara_data["attributes"]["san"] = new_san
         charmod.save_character(user_id, chara_data["id"], chara_data)
-        return sanity.format_san_result(chara_data, roll_result, san_value, result_msg, loss, new_san)
+        if new_san == 0:
+            return get_output("san.check_result.zero", name=chara_data["name"], roll_result=roll_result, san_value=san_value, result_msg=result_msg, loss=loss, new_san=new_san)
+        if loss == 0:
+            return get_output("san.check_result.no_loss", name=chara_data["name"], roll_result=roll_result, san_value=san_value, result_msg=result_msg, loss=loss, new_san=new_san)
+        if loss < 5:
+            return get_output("san.check_result.loss", name=chara_data["name"], roll_result=roll_result, san_value=san_value, result_msg=result_msg, loss=loss, new_san=new_san)
+        return get_output("san.check_result.great_loss", name=chara_data["name"], roll_result=roll_result, san_value=san_value, result_msg=result_msg, loss=loss, new_san=new_san)
 
     @filter.llm_tool(name="roll_coc_character")
     async def llm_tool_roll_coc_character(self, event: AstrMessageEvent, count: int = 1) -> Optional[str]:
@@ -60,7 +74,9 @@ class LLMToolsMixin:
             count(number): 生成角色数量，默认1，最多5
         """
         count = max(1, min(count, 5))
-        return generate_characters(roll_character, format_character, count)
+        chars = [roll_character() for _ in range(count)]
+        results = [format_character(c, index=i + 1) for i, c in enumerate(chars)]
+        return "\n\n".join(results)
 
     @filter.llm_tool(name="roll_dnd_character")
     async def llm_tool_roll_dnd_character(self, event: AstrMessageEvent, count: int = 1) -> Optional[str]:
@@ -70,7 +86,9 @@ class LLMToolsMixin:
             count(number): 生成角色数量，默认1，最多5
         """
         count = max(1, min(count, 5))
-        return generate_characters(roll_dnd_character, format_dnd_character, count)
+        chars = [roll_dnd_character() for _ in range(count)]
+        results = [format_dnd_character(c, index=i + 1) for i, c in enumerate(chars)]
+        return "\n\n".join(results)
 
     @filter.llm_tool(name="fireball_damage")
     async def llm_tool_fireball(self, event: AstrMessageEvent, ring: int = 3) -> Optional[str]:

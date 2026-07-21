@@ -110,6 +110,7 @@ def set_great_sf_rule(rule:int, group:str)->int:
     Returns:
         int: 1 for succeed, neg number for error. 
     '''
+    coc_rule_init()
 
     # db connection
     ruledb = sqlite3.connect(f"{PLUGIN_DIR}/../data/cocrule.db")
@@ -140,6 +141,8 @@ def get_great_sf_rule(group:str)->int:
     Returns:
         int: rule id, -1 for group not exist.
     '''
+    coc_rule_init()
+
     # db connection
     ruledb = sqlite3.connect(f"{PLUGIN_DIR}/../data/cocrule.db")
     csr = ruledb.cursor()
