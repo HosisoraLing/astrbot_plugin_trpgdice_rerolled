@@ -11,36 +11,26 @@ from ..component import character as charmod
 from ..component import dice as dice_mod
 from ..component import sanity
 from ..component.output import get_output
-from ..component.utils import get_sender_nickname
+from ..component.platform_adapter import get_adapter
 
 
 class CoCMixin:
 
     @filter.command("ra")
-    async def roll_attribute(self, event: AstrMessageEvent, skill_name: str = "", skill_value: str = None):
+    async def roll_attribute(self, event: AstrMessageEvent, skill_name: str = "", skill_value: str = None) -> str:
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
-        name = event.get_sender_name()
 
         if skill_value is None:
             skill_value = charmod.get_skill_value(user_id, skill_name)
 
-        client = event.bot
-        ret = await get_sender_nickname(client, group_id, user_id)
-
-        ret = event.get_sender_name() if ret == "" else ret
-        result_message = dice_mod.roll_attribute(skill_name, skill_value, str(group_id), ret)
+        adapter = get_adapter(event)
+        name = await adapter.get_nickname(event)
+        result_message = dice_mod.roll_attribute(skill_name, skill_value, str(group_id), name)
         result_message = await self._beautify(result_message, event)
-        payloads = {
-            "group_id": group_id,
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": "\n" + result_message}}
-            ]
-        }
         await self.save_log(group_id=event.get_group_id(), content=result_message)
-        await client.api.call_action("send_group_msg", **payloads)
+
+        return result_message
 
     # 惩罚骰技能判定
     @filter.command("rap")
@@ -56,28 +46,20 @@ class CoCMixin:
             skill_value = arg2 if arg2 else None
         await self.roll_attribute_penalty(event, dice_count, skill_name, skill_value)
 
-    async def roll_attribute_penalty(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None):
+    async def roll_attribute_penalty(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None) -> str:
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
 
         if skill_value is None:
             skill_value = charmod.get_skill_value(user_id, skill_name)
 
-        client = event.bot
-        ret = await get_sender_nickname(client, group_id, user_id)
-        ret = event.get_sender_name() if ret == "" else ret
-        result_message = dice_mod.roll_attribute_penalty(dice_count, skill_name, skill_value, str(group_id), ret)
+        adapter = get_adapter(event)
+        name = await adapter.get_nickname(event)
+        result_message = dice_mod.roll_attribute_penalty(dice_count, skill_name, skill_value, str(group_id), name)
         result_message = await self._beautify(result_message, event)
-        payloads = {
-            "group_id": group_id,
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": "\n" + result_message}}
-            ]
-        }
         await self.save_log(group_id=event.get_group_id(), content=result_message)
-        await client.api.call_action("send_group_msg", **payloads)
+
+        return result_message
 
     # 奖励骰技能判定
     @filter.command("rab")
@@ -93,56 +75,40 @@ class CoCMixin:
             skill_value = arg2 if arg2 else None
         await self.roll_attribute_bonus(event, dice_count, skill_name, skill_value)
 
-    async def roll_attribute_bonus(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None):
+    async def roll_attribute_bonus(self, event: AstrMessageEvent, dice_count: str = "1", skill_name: str = "", skill_value: str = None) -> str:
         user_id = event.get_sender_id()
         group_id = event.get_group_id()
 
         if skill_value is None:
             skill_value = charmod.get_skill_value(user_id, skill_name)
 
-        client = event.bot
-        ret = await get_sender_nickname(client, group_id, user_id)
-        ret = event.get_sender_name() if ret == "" else ret
-        result_message = dice_mod.roll_attribute_bonus(dice_count, skill_name, skill_value, str(group_id), ret)
+        adapter = get_adapter(event)
+        name = await adapter.get_nickname(event)
+        result_message = dice_mod.roll_attribute_bonus(dice_count, skill_name, skill_value, str(group_id), name)
         result_message = await self._beautify(result_message, event)
-        payloads = {
-            "group_id": group_id,
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": "\n" + result_message}}
-            ]
-        }
         await self.save_log(group_id=event.get_group_id(), content=result_message)
-        await client.api.call_action("send_group_msg", **payloads)
+
+        return result_message
 
     @filter.command("en")
     async def cmd_en(self, event: AstrMessageEvent, skill_name: str = "", skill_value: str = ""):
         """技能成长判定 (.en 侦查 50)"""
         skill_value = skill_value if skill_value else None
-        await self.pc_grow_up(event, skill_name, skill_value)
+        text = await self.pc_grow_up(event, skill_name, skill_value)
+        yield event.plain_result(text)
 
-    async def pc_grow_up(self, event: AstrMessageEvent, skill_name: str, skill_value: str = None):
+    async def pc_grow_up(self, event: AstrMessageEvent, skill_name: str, skill_value: str = None) -> str:
         """
         .en 技能成长判定
-        调用 character 模块的 grow_up 生成结果文本，再通过 event 发送给用户。
+        调用 character 模块的 grow_up 生成结果文本，交给调用方发送。
         """
         user_id = event.get_sender_id()
 
         result_str = charmod.grow_up(user_id, skill_name=skill_name, skill_value=skill_value)
         result_str = await self._beautify(result_str, event)
-        group_id = event.get_group_id()
-        client = event.bot
-        payloads = {
-            "group_id": group_id,
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": "\n" + result_str}}
-            ]
-        }
         await self.save_log(group_id=event.get_group_id(), content=result_str)
-        await client.api.call_action("send_group_msg", **payloads)
+
+        return result_str
 
     # san check
     @filter.command("sc")
@@ -154,9 +120,7 @@ class CoCMixin:
     async def pc_san_check(self, event: AstrMessageEvent, loss_formula: str):
         """理智检定"""
         user_id = event.get_sender_id()
-        group_id = event.get_group_id()
         chara_data = charmod.get_current_character(user_id)
-        client = event.bot
 
         if not chara_data:
             yield event.plain_result(get_output("pc.show.no_active"))
@@ -211,16 +175,12 @@ class CoCMixin:
             )
 
         text = await self._beautify(text, event)
-        payloads = {
-            "group_id": group_id,
-            "message": [
-                {"type": "reply", "data": {"id": event.message_obj.message_id}},
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": "\n" + text}}
-            ]
-        }
         await self.save_log(group_id=event.get_group_id(), content=text)
-        await client.api.call_action("send_group_msg", **payloads)
+
+        adapter = get_adapter(event)
+        sent = await adapter.send_group_message(event, text, reply=True)
+        if not sent:
+            yield event.plain_result(text)
 
     @filter.command("ti")
     async def pc_temporary_insanity(self, event: AstrMessageEvent):

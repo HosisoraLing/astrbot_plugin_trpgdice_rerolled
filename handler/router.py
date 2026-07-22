@@ -15,6 +15,7 @@ import time
 from ..component.astrbot_compat import AstrMessageEvent, filter, event_message_type, EventMessageType
 
 from ..component.output import get_config
+from ..component.platform_adapter import get_adapter
 
 # 撤回事件的 notice_type
 NOTICE_GROUP_RECALL = "group_recall"
@@ -23,10 +24,12 @@ NOTICE_FRIEND_RECALL = "friend_recall"
 
 class RouterMixin:
 
-    @filter.platform_adapter_type(filter.PlatformAdapterType.AIOCQHTTP)
     @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
     async def handle_recall_event(self, event: AstrMessageEvent):
         """监听撤回事件，从日志中移除撤回的消息"""
+        adapter = get_adapter(event)
+        if not adapter.supports_recall_events:
+            return
         try:
             raw = getattr(event.message_obj, "raw_message", None)
             if not raw:
@@ -167,9 +170,19 @@ class RouterMixin:
         # ===================== 命令分发 =====================
         # --- 掷骰 ---
         if cmd == "r":
-            await self.handle_roll_dice(event, expr, remark)
+            text = await self.handle_roll_dice(event, expr, remark)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
         elif cmd == "rd":
-            await self.handle_roll_dice(event, expr, remark)
+            text = await self.handle_roll_dice(event, expr, remark)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
         elif cmd == "rh":
             async for result in self.roll_hidden(event, expr if expr else None):
                 yield result
@@ -179,22 +192,42 @@ class RouterMixin:
             if not expr_raw:
                 yield event.plain_result("[错误] 用法: .ra 技能名 [技能值]")
                 return
-            await self.roll_attribute(event, expr_raw, skill_value)
+            text = await self.roll_attribute(event, expr_raw, skill_value)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
         elif cmd == "rab":
             if not expr_raw:
                 yield event.plain_result("[错误] 用法: .rab [n] 技能名 [技能值]")
                 return
-            await self.roll_attribute_bonus(event, dice_count, expr_raw, skill_value)
+            text = await self.roll_attribute_bonus(event, dice_count, expr_raw, skill_value)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
         elif cmd == "rap":
             if not expr_raw:
                 yield event.plain_result("[错误] 用法: .rap [n] 技能名 [技能值]")
                 return
-            await self.roll_attribute_penalty(event, dice_count, expr_raw, skill_value)
+            text = await self.roll_attribute_penalty(event, dice_count, expr_raw, skill_value)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
         elif cmd == "en":
             if not expr_raw:
                 yield event.plain_result("[错误] 用法: .en 技能名 [技能值]")
                 return
-            await self.pc_grow_up(event, expr_raw, skill_value)
+            text = await self.pc_grow_up(event, expr_raw, skill_value)
+            if text:
+                adapter = get_adapter(event)
+                sent = await adapter.send_group_message(event, text, reply=True)
+                if not sent:
+                    yield event.plain_result(text)
 
         # --- 理智 ---
         elif cmd == "sc":
