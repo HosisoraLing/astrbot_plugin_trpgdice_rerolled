@@ -48,9 +48,12 @@
 - 修复 `telegram.py` 中 `from __future__ import annotations` 重复导入
 - 修复 `telegram.py` 中缺失 `cast` 导入
 
-### 🔧 架构重构
+
 
 ## [1.4.1] - 2026-07-17
+
+### 🔧 架构重构
+
 
 #### 命令路由集中化
 
