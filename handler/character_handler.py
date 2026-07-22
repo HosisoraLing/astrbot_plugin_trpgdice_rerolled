@@ -14,6 +14,7 @@ from ..component.astrbot_compat import filter, AstrMessageEvent, command_group
 from ..component import character as charmod
 from ..component import dice as dice_mod
 from ..component.output import get_output
+from ..component.platform_adapter import get_adapter
 
 
 class CharacterMixin:
@@ -246,17 +247,13 @@ class CharacterMixin:
     # ----------------- filter sn -----------------
     @filter.command("sn")
     async def filter_set_nickname(self, event):
-        if event.get_platform_name() != "aiocqhttp":
+        adapter = get_adapter(event)
+        if not adapter.supports_group_card:
             yield event.plain_result(get_output("nick.platform_unsupported"))
             return
 
-        from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
-        client = event.bot
-        user_id = event.get_sender_id()
-        group_id = event.get_group_id()
-
-        chara_id = charmod.get_current_character_id(user_id)
-        chara_data = charmod.load_character(user_id, chara_id)
+        chara_id = charmod.get_current_character_id(event.get_sender_id())
+        chara_data = charmod.load_character(event.get_sender_id(), chara_id)
         if not chara_data:
             yield event.plain_result(get_output("nick.no_character", id=chara_id))
             return
@@ -268,7 +265,5 @@ class CharacterMixin:
         dex = chara_data['attributes'].get('dex', 0)
         new_card = f"{name} HP:{hp}/{max_hp} SAN:{san} DEX:{dex}"
 
-        payloads = {"group_id": group_id, "user_id": user_id, "card": new_card}
-        await client.api.call_action("set_group_card", **payloads)
-
+        await adapter.set_group_card(event, new_card)
         yield event.plain_result(get_output("nick.success"))

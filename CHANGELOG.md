@@ -6,9 +6,54 @@
 
 ---
 
-## [1.4.0] - 2026-07-17
+## [1.5.0] - 2026-07-22
+
+### 🔧 架构重构：平台适配器抽象层
+
+- **新增 `component/platform_adapter/` 模块** — 将平台特定 API 调用从 handler 中剥离，通过适配器模式统一接口
+  - `base.py` — `BasePlatformAdapter` 抽象基类，定义 `send_group_message()`、`send_private_message()`、`get_nickname()`、`set_group_card()` 等接口
+  - `__init__.py` — 工厂函数 `get_adapter(event)` 根据事件平台自动匹配合适的适配器，回退到 `UnknownPlatformAdapter`
+  - `unknown.py` — 未知平台回退适配器，所有消息操作返回 `False`，触发调用方 `yield event.plain_result()` 兜底
+
+- **handler 层全部改为通过适配器发送消息**
+  - `dice_handler.py` / `coc_handler.py` 中的 `handle_roll_dice`、`roll_attribute`、`roll_attribute_bonus`、`roll_attribute_penalty`、`pc_grow_up` — 改为返回结果文本，不再直接调用 OneBot API
+  - `router.py` 统一负责通过适配器发送 + fallback 逻辑
+  - `character_handler.py` — `sn` 命令改为运行时检查 `adapter.supports_group_card`，而非硬编码 `"aiocqhttp"` 平台名
+  - `router.py` — 撤回事件改为运行时检查 `adapter.supports_recall_events`
+
+- **清理平台依赖**
+  - `component/utils.py` — 移除 `get_sender_nickname()` 函数（原直接调用 OneBot `get_group_member_info`）
+  - 所有 `client.api.call_action()` 调用已全部收敛至适配器层
+
+### ✨ 新增平台支持
+
+#### Telegram 适配器（实验性）
+
+- 使用 `python-telegram-bot` ExtBot API
+- `send_group_message` — `client.send_message()` 带 `reply_to_message_id`
+- `send_private_message` — `client.send_message()` 私聊发送
+- `get_nickname` — `client.get_chat_member()` 获取群成员名称
+- `supports_recall_events` / `supports_group_card` — 不支持
+
+#### QQ 官方机器人适配器（实验性）
+
+- 使用 `qq-botpy` (botpy) Client API
+- `send_group_message` — `bot.api.post_group_message()` 群聊消息
+- `send_private_message` — C2C 消息通过 `/v2/users/{openid}/messages` API
+- `get_nickname` — QQ 官方不暴露昵称查询，返回 `event.get_sender_name()`
+- `supports_recall_events` / `supports_group_card` — 不支持
+
+### 🐛 Bug 修复
+
+- 修复 `telegram.py` 中 `from __future__ import annotations` 重复导入
+- 修复 `telegram.py` 中缺失 `cast` 导入
+
+
+
+## [1.4.1] - 2026-07-17
 
 ### 🔧 架构重构
+
 
 #### 命令路由集中化
 
@@ -22,6 +67,7 @@
 - **修复多词命令空格剔除 Bug**
   - 原 `re.sub(r'\s+', '', ...)` 将 `.pc list` → `pclist`、`.log new` → `lognew`，导致 `cmd == "pc"` 永远为 False
   - 改为从原始消息（保留空格）提取命令词，空格剔除版仅用于 `ra/en/rd/r` 的数值解析
+
 
 ### 🐛 Bug 修复
 
