@@ -63,6 +63,8 @@
   - 原 `re.sub(r'\s+', '', ...)` 将 `.pc list` → `pclist`、`.log new` → `lognew`，导致 `cmd == "pc"` 永远为 False
   - 改为从原始消息（保留空格）提取命令词，空格剔除版仅用于 `ra/en/rd/r` 的数值解析
 
+## [1.4.1] - 2026-07-17
+
 ### 🐛 Bug 修复
 
 - **修复 `.ra` 首次调用崩溃** - `coc_rule_init()` 仅在 `.setcoc` 中调用，`.ra` 首次执行时 SQLite `GroupRule` 表不存在。现 `set_great_sf_rule()` / `get_great_sf_rule()` 内部自动调用 `coc_rule_init()`
