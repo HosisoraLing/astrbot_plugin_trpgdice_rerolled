@@ -9,8 +9,6 @@
 """
 
 import re
-import random
-import time
 
 from ..component.astrbot_compat import AstrMessageEvent, filter, event_message_type, EventMessageType
 
@@ -56,7 +54,7 @@ class RouterMixin:
             print(f"[TRPGDice] 处理撤回事件出错: {e}")
 
     # 日志收集 + 全部命令路由（@event_message_type 在 AstrBot 中会先于 @filter.command 消费事件）
-    @event_message_type(EventMessageType.GROUP_MESSAGE)
+    @event_message_type(EventMessageType.ALL)
     async def identify_command(self, event: AstrMessageEvent):
         message = event.message_obj.message_str
 
@@ -80,8 +78,6 @@ class RouterMixin:
                 message_id=message_id
             )
         # ----------------------------------------------------
-
-        random.seed(int(time.time() * 1000))
 
         if not any(message.startswith(prefix) for prefix in self.wakeup_prefix):
             return
@@ -231,7 +227,22 @@ class RouterMixin:
 
         # --- 理智 ---
         elif cmd == "sc":
-            async for result in self.pc_san_check(event, expr_raw if expr_raw else "1d6/1d10"):
+            # 兼容三种输入格式：
+            #   .sc 1d3/1d9 → 标准格式，成功扣1d3，失败扣1d9
+            #   .sc 1d3 1d9 → 空格分隔，等同 "/"
+            #   .sc 1d9     → 仅指定失败损失，成功不扣 san
+            if not expr_raw:
+                sc_formula = "1d6/1d10"
+                yield event.plain_result("⚠️ 未指定理智损失公式，将使用默认值：成功扣 1d6 / 失败扣 1d10")
+            elif "/" in expr_raw:
+                sc_formula = expr_raw
+            elif " " in expr_raw.strip():
+                parts = expr_raw.strip().split(None, 1)
+                sc_formula = f"{parts[0]}/{parts[1]}"
+            else:
+                # 仅一个值：成功不扣，失败扣该值
+                sc_formula = f"0/{expr_raw}"
+            async for result in self.pc_san_check(event, sc_formula):
                 yield result
         elif cmd == "ti":
             async for result in self.pc_temporary_insanity(event):

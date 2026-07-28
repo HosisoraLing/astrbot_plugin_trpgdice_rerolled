@@ -41,6 +41,7 @@ Thumbs.db
 # Runtime data
 component/data/
 data/cocrule.db
+data/group_logs
 data/plugin_overrides.json
 V20_char_sheet/char_sheet.db
 .log
