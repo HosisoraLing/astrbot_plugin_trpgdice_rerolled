@@ -37,7 +37,7 @@ class TelegramAdapter(BasePlatformAdapter):
 
     def _get_client(self, event: AstrMessageEvent) -> ExtBot:
         """获取 Telegram bot client。"""
-        return cast(ExtBot, event.bot)
+        return cast(ExtBot, event.client)
 
     def _get_chat_id(self, event: AstrMessageEvent) -> str:
         """获取消息来源的 chat_id。"""
@@ -105,5 +105,19 @@ class TelegramAdapter(BasePlatformAdapter):
                     return name
             except Exception:
                 pass
+
+        # Fallback: 从 Telegram Update 中提取 first_name/last_name
+        try:
+            raw = event.message_obj.raw_message
+            from_user = raw.message.from_user if hasattr(raw, "message") else None
+            if from_user:
+                name_parts = [from_user.first_name or ""]
+                if from_user.last_name:
+                    name_parts.append(from_user.last_name)
+                name = " ".join(name_parts).strip()
+                if name:
+                    return name
+        except Exception:
+            pass
 
         return event.get_sender_name()

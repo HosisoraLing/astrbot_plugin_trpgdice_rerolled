@@ -6,6 +6,25 @@
 
 ---
 
+## [1.5.1] - 2026-07-28
+
+### 🐛 Bug 修复
+
+- **修复 Telegram 适配器 `event.bot` 属性错误** — `TelegramPlatformEvent` 使用 `self.client` 而非 `self.bot`，导致 `_get_client()` 崩溃
+- **修复 Telegram 用户名显示 "Unknown"** — `get_nickname()` 新增从 `raw_message` 提取 `first_name`/`last_name` 的 fallback
+- **修复 Telegram 私聊无响应** — `identify_command` 改为监听 `EventMessageType.ALL`，私聊消息也能路由
+- **修复 `random.seed` 导致 RNG 可预测** — 移除每消息重设全局随机种子的有害代码
+- **修复 SAN Check 兼容性BUG** — 新增 `_get_san_value()`，兼容 `san`/`SAN`/`san值`/`理智`/`理智值` 多种键名
+- **修复重大损失阈值** — `loss < 5` → `loss <= 5`，仅损失 6+ 才标"重大损失"
+
+### ✨ 功能改进
+
+- **`.sc` 兼容三种输入格式**
+  - 标准格式：`.sc 1d3/1d9`
+  - 空格分隔：`.sc 1d3 1d9`
+  - 单值（成功不扣）：`.sc 1d9`
+- **`.sc` 无参数时提示默认值** — 告知默认使用 1d6/1d10
+
 ## [1.5.0] - 2026-07-22
 
 ### 🔧 架构重构：平台适配器抽象层

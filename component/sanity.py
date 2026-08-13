@@ -48,6 +48,17 @@ def roll_loss(loss_expr: str):
         return int(loss_expr)
     return 0
 
+def _get_san_value(attributes: dict) -> int:
+    """从人物卡属性中获取 SAN 值，依次尝试常见键名。"""
+    for key in ("san", "SAN", "san值", "理智", "理智值"):
+        val = attributes.get(key)
+        if val is not None:
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                continue
+    return 0
+
 def san_check(chara_data: dict, loss_formula: str):
     """
     进行一次理智检定，返回检定结果和损失值。
@@ -55,7 +66,7 @@ def san_check(chara_data: dict, loss_formula: str):
     loss_formula: 损失公式，如 "1d6/1d10"
     返回：(roll_result, san_value, result_msg, loss, new_san)
     """
-    san_value = chara_data["attributes"].get("san", 0)
+    san_value = _get_san_value(chara_data.get("attributes", {}))
     dice_min = get_config("sanity.dice_range.min", 1)
     dice_max = get_config("sanity.dice_range.max", 100)
     roll_result = random.randint(dice_min, dice_max)

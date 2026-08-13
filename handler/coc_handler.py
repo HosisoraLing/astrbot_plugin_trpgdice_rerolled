@@ -153,7 +153,7 @@ class CoCMixin:
                 loss=loss,
                 new_san=new_san
             )
-        elif loss < 5:
+        elif loss <= 5:
             text = get_output(
                 "san.check_result.loss",
                 name=chara_data["name"],
